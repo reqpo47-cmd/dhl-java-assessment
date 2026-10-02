@@ -23,10 +23,7 @@ function goToInstructions() {
     return;
   }
 
-  if (attempts >= 2) {
-    alert("Maximum attempt limit reached (2 attempts allowed per candidate/system). Access denied.");
-    return;
-  }
+ 
 
   showPage('page-2');
 }
@@ -102,4 +99,21 @@ function submitAssessment(reason) {
   Your test results are logged. The <strong>DHL HR Team</strong> will reach out to you directly regarding the next steps.
 `;
   showPage('page-4');
+}
+function validateAndSubmit() {
+  let allAnswered = true;
+  
+  testQuestions.forEach(q => {
+    const ansElem = document.getElementById(`ans-${q.id}`);
+    if (!ansElem || ansElem.value.trim() === "") {
+      allAnswered = false;
+    }
+  });
+
+  if (!allAnswered) {
+    alert("Please write the answer for all questions before submitting the assessment!");
+    return;
+  }
+
+  submitAssessment('Manual Submission');
 }
