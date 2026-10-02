@@ -50,9 +50,10 @@
     /* Form Inputs */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
     .form-group { margin-bottom: 16px; }
+    .form-group.full-width { grid-column: span 2; }
     label { display: block; margin-bottom: 6px; font-weight: 600; color: #DDD; font-size: 13px; }
-    input, textarea { width: 100%; padding: 12px; background: #2A2A2A; border: 1px solid #444; color: #FFF; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; }
-    input:focus, textarea:focus { outline: none; border-color: var(--dhl-yellow); }
+    input, textarea, select { width: 100%; padding: 12px; background: #2A2A2A; border: 1px solid #444; color: #FFF; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--dhl-yellow); }
 
     /* Instructions Box */
     .instructions-box { background: #181818; border-left: 4px solid var(--dhl-yellow); border-radius: 4px; padding: 22px; margin: 25px 0 15px 0; }
@@ -77,7 +78,7 @@
     .question-title { font-size: 18px; font-weight: bold; color: #FFF; margin-bottom: 12px; border-left: 4px solid var(--dhl-yellow); padding-left: 10px; }
     .question-desc { font-size: 14px; color: #CCC; white-space: pre-line; margin-bottom: 20px; line-height: 1.6; background: #161616; padding: 18px; border-radius: 6px; border: 1px solid #333; }
 
-    /* GitHub Real Editor Styling */
+    /* Editor Styling */
     .editor-wrapper { position: relative; margin-top: 15px; border: 1px solid #444; border-radius: 6px; overflow: hidden; background: #0D1117; }
     .editor-header { background: #161B22; padding: 8px 16px; font-size: 12px; color: #8B949E; border-bottom: 1px solid #30363D; display: flex; justify-content: space-between; font-weight: 600; }
     textarea.code-editor { font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; line-height: 1.5; background: #0D1117; color: #58A6FF; padding: 15px; min-height: 250px; border: none; outline: none; tab-size: 2; resize: vertical; box-sizing: border-box; }
@@ -87,6 +88,13 @@
     .btn:hover { background: #B0040E; box-shadow: 0 4px 12px rgba(212, 5, 17, 0.4); }
     .btn-secondary { background: #333; color: #FFF; }
     .btn-secondary:hover { background: #444; }
+
+    /* Submission Card Badges */
+    .ack-card { background: #181818; border: 1px solid #333; border-radius: 8px; padding: 30px; margin-top: 20px; text-align: left; }
+    .ack-badge { display: inline-block; background: #00AA44; color: #FFF; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 4px; margin-bottom: 15px; text-transform: uppercase; }
+    .ack-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 15px 0; margin: 15px 0; }
+    .ack-item label { font-size: 12px; color: #888; text-transform: uppercase; }
+    .ack-item div { font-size: 14px; color: #FFF; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -209,7 +217,7 @@
       </div>
     </div>
 
-    <!-- PAGE 2: One-Question-Per-Page Live Test Interface -->
+    <!-- PAGE 2: Live Test Interface -->
     <div id="page-2" class="page">
       <div class="card">
         <div class="test-header">
@@ -233,16 +241,128 @@
         <div class="nav-btn-container">
           <button type="button" class="btn btn-secondary" id="btn-prev" onclick="navigateQuestion(-1)">Previous Question</button>
           <button type="button" class="btn" id="btn-next" onclick="navigateQuestion(1)">Next Question</button>
-          <button type="button" class="btn" id="btn-submit" style="display: none; background: #00AA44;" onclick="validateAndSubmit()">Submit Final Assessment</button>
+          <button type="button" class="btn" id="btn-submit" style="display: none; background: #00AA44;" onclick="goToAgencyVerification()">Proceed to Final Submission Setup</button>
         </div>
       </div>
     </div>
 
-    <!-- PAGE 3: Completion Screen -->
+    <!-- PAGE 3: Consultant Verification & Submitting Agency Declaration Form -->
     <div id="page-3" class="page">
+      <div class="card">
+        <h2>Consultant Agency Verification & Deployment Details</h2>
+        <p>Your technical responses have been recorded. Please verify your submitting vendor agency and deployment availability below to transmit your results to the DHL Technical HR Review Panel.</p>
+
+        <form id="agency-verification-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Candidate Legal Full Name *</label>
+              <input type="text" id="final-cand-name" required placeholder="Full Name as per Legal ID">
+            </div>
+
+            <div class="form-group">
+              <label>Primary Contact Phone Number *</label>
+              <input type="text" id="final-cand-phone" required placeholder="+1 (555) 000-0000">
+            </div>
+
+            <div class="form-group">
+              <label>Verified Email Address *</label>
+              <input type="email" id="final-cand-email" required placeholder="candidate@domain.com">
+            </div>
+
+            <div class="form-group">
+              <label>Submitting Consulting / Vendor Agency *</label>
+              <select id="agency-select" required onchange="handleAgencyChange(this)">
+                <option value="">-- Select Submitting Agency --</option>
+                <option value="Infteq">Infteq</option>
+                <option value="AUum Solutions">AUum Solutions</option>
+                <option value="Kommforce Solutions">Kommforce Solutions</option>
+                <option value="Advithri">Advithri</option>
+                <option value="Ask Consulting">Ask Consulting</option>
+                <option value="Truspary Consulting">Truspary Consulting</option>
+                <option value="ABQ Tech">ABQ Tech</option>
+                <option value="Cloud Computer Tech">Cloud Computer Tech</option>
+                <option value="NCS Wizards">NCS Wizards</option>
+                <option value="Canopy One">Canopy One</option>
+                <option value="Merge IT">Merge IT</option>
+                <option value="OTHER">Other / Not listed above</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width" id="other-agency-group" style="display: none;">
+              <label>Specify Submitting Consulting Firm Name *</label>
+              <input type="text" id="other-agency-input" placeholder="Enter the exact name of your consulting agency">
+            </div>
+
+            <div class="form-group">
+              <label>How soon can you join if selected? *</label>
+              <select id="joining-timeline" required>
+                <option value="">-- Select Availability Timeline --</option>
+                <option value="Immediate (0-3 Days)">Immediate (0–3 Days)</option>
+                <option value="1 Week Notice">1 Week Notice</option>
+                <option value="2 Weeks Notice">2 Weeks Notice</option>
+                <option value="3-4 Weeks Notice">3–4 Weeks Notice</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Work Authorization & W2 Status *</label>
+              <select id="work-authorization" required>
+                <option value="">-- Select W2 Eligibility --</option>
+                <option value="US Citizen (W2)">US Citizen (W2)</option>
+                <option value="Green Card (W2)">Green Card (W2)</option>
+                <option value="GC EAD / H4 EAD (W2)">GC EAD / H4 EAD (W2)</option>
+                <option value="H1B Direct W2 Transfer">H1B Direct W2 Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Sworn Confirmation Checkbox -->
+          <div class="compliance-box">
+            <h3>Final Candidate Authorization Declaration</h3>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="check-final-decl" required>
+              <label for="check-final-decl">I hereby certify that all technical responses submitted in this assessment are solely my own work without unauthorized third-party or automated assistance. I authorize DHL Technical HR to share my score with my designated consulting agency.</label>
+            </div>
+          </div>
+
+          <button type="button" class="btn" style="width: 100%; background: #00AA44;" onclick="executeFinalSubmission()">Complete Final Assessment Submission</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- PAGE 4: Completion Screen -->
+    <div id="page-4" class="page">
       <div class="card" style="text-align: center;">
         <h2 style="border: none; color: #00FF66;">Assessment Successfully Submitted!</h2>
-        <p id="submission-message">Your technical assessment answers have been encrypted and logged. The <strong>DHL HR Team</strong> will review your evaluation and get in touch with you directly.</p>
+        
+        <div class="ack-card">
+          <div class="ack-badge">Verified Submission Code: DHL-W2-EVAL-2026</div>
+          <p style="color: #DDD; font-size: 14px; margin-bottom: 15px;">Your code responses and candidate profile details have been encrypted and transmitted to the DHL Global Talent Acquisition portal.</p>
+          
+          <div class="ack-details-grid">
+            <div class="ack-item">
+              <label>Candidate Name</label>
+              <div id="ack-name">-</div>
+            </div>
+            <div class="ack-item">
+              <label>Submitting Vendor Firm</label>
+              <div id="ack-agency">-</div>
+            </div>
+            <div class="ack-item">
+              <label>Earliest Start Date</label>
+              <div id="ack-joining">-</div>
+            </div>
+            <div class="ack-item">
+              <label>Status / Security Proctor</label>
+              <div id="ack-status" style="color: #00FF66;">Logged & Verified</div>
+            </div>
+          </div>
+
+          <p id="submission-message" style="font-size: 13.5px; color: #AAA; line-height: 1.6; margin-top: 15px;">
+            The <strong>DHL HR Team</strong> together with your vendor account manager will review your submission code and communicate the interview results directly.
+          </p>
+        </div>
       </div>
     </div>
 
