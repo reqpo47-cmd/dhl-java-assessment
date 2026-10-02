@@ -12,19 +12,22 @@ document.addEventListener('contextmenu', (e) => e.preventDefault());
 
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+  const targetPage = document.getElementById(pageId);
+  if (targetPage) {
+    targetPage.classList.add('active');
+  }
 }
 
 function startAssessmentProcess() {
-  const name = document.getElementById('cand-name').value.trim();
-  const email = document.getElementById('cand-email').value.trim();
-  const phone = document.getElementById('cand-phone').value.trim();
-  const linkedin = document.getElementById('cand-linkedin').value.trim();
+  const name = document.getElementById('cand-name') ? document.getElementById('cand-name').value.trim() : '';
+  const email = document.getElementById('cand-email') ? document.getElementById('cand-email').value.trim() : '';
+  const phone = document.getElementById('cand-phone') ? document.getElementById('cand-phone').value.trim() : '';
+  const linkedin = document.getElementById('cand-linkedin') ? document.getElementById('cand-linkedin').value.trim() : '';
 
-  const checkPolicy = document.getElementById('check-policy').checked;
-  const checkW2 = document.getElementById('check-w2').checked;
-  const checkProctor = document.getElementById('check-proctor').checked;
-  const checkInstructions = document.getElementById('check-instructions').checked;
+  const checkPolicy = document.getElementById('check-policy') ? document.getElementById('check-policy').checked : false;
+  const checkW2 = document.getElementById('check-w2') ? document.getElementById('check-w2').checked : false;
+  const checkProctor = document.getElementById('check-proctor') ? document.getElementById('check-proctor').checked : false;
+  const checkInstructions = document.getElementById('check-instructions') ? document.getElementById('check-instructions').checked : false;
 
   if (!name || !email || !phone || !linkedin) {
     alert("Please complete all candidate profile fields before proceeding.");
@@ -41,7 +44,15 @@ function startAssessmentProcess() {
   localStorage.setItem('dhl_attempts', attempts);
 
   // Load Questions set dynamically based on attempt
-  activeQuestions = getQuestionsForCurrentAttempt();
+  if (typeof getQuestionsForCurrentAttempt === "function") {
+    activeQuestions = getQuestionsForCurrentAttempt();
+  } else if (typeof testQuestions !== "undefined") {
+    activeQuestions = testQuestions;
+  } else {
+    alert("Error loading questions. Please contact support.");
+    return;
+  }
+
   currentQuestionIndex = 0;
 
   showPage('page-2');
@@ -51,29 +62,41 @@ function startAssessmentProcess() {
 }
 
 function loadQuestion(index) {
+  if (!activeQuestions || activeQuestions.length === 0) return;
+
   const q = activeQuestions[index];
   document.getElementById('question-progress-label').textContent = `QUESTION ${index + 1} OF ${activeQuestions.length}`;
   document.getElementById('q-title').textContent = q.title;
   document.getElementById('q-desc').textContent = q.description;
 
   const codeArea = document.getElementById('current-code-answer');
-  codeArea.value = userAnswers[q.id] || '';
+  if (codeArea) {
+    codeArea.value = userAnswers[q.id] || '';
+  }
 
   // Button Visibility Controls
-  document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
+  const prevBtn = document.getElementById('btn-prev');
+  const nextBtn = document.getElementById('btn-next');
+  const submitBtn = document.getElementById('btn-submit');
+
+  if (prevBtn) prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
+
   if (index === activeQuestions.length - 1) {
-    document.getElementById('btn-next').style.display = 'none';
-    document.getElementById('btn-submit').style.display = 'inline-block';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'inline-block';
   } else {
-    document.getElementById('btn-next').style.display = 'inline-block';
-    document.getElementById('btn-submit').style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'inline-block';
+    if (submitBtn) submitBtn.style.display = 'none';
   }
 }
 
 function saveCurrentAnswer() {
+  if (!activeQuestions || activeQuestions.length === 0) return;
   const q = activeQuestions[currentQuestionIndex];
   const codeArea = document.getElementById('current-code-answer');
-  userAnswers[q.id] = codeArea.value;
+  if (q && codeArea) {
+    userAnswers[q.id] = codeArea.value;
+  }
 }
 
 function navigateQuestion(direction) {
@@ -86,11 +109,15 @@ function navigateQuestion(direction) {
 
 function startTimer() {
   const display = document.getElementById('timer-display');
+  if (timerInterval) clearInterval(timerInterval);
+
   timerInterval = setInterval(() => {
     timeRemaining--;
     let mins = Math.floor(timeRemaining / 60);
     let secs = timeRemaining % 60;
-    display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    if (display) {
+      display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 
     if (timeRemaining <= 0) {
       clearInterval(timerInterval);
@@ -122,7 +149,7 @@ function validateAndSubmit() {
   });
 
   if (missing) {
-    alert("Please write solutions for all 5 questions before submitting.");
+    alert("Please write solutions for all questions before submitting.");
     return;
   }
 
@@ -132,13 +159,13 @@ function validateAndSubmit() {
 function submitAssessment(reason) {
   clearInterval(timerInterval);
   saveCurrentAnswer();
-  
+
   const candidateData = {
-    name: document.getElementById('cand-name').value,
-    email: document.getElementById('cand-email').value,
-    phone: document.getElementById('cand-phone').value,
-    linkedin: document.getElementById('cand-linkedin').value,
-    attemptNumber: localStorage.getItem('dhl_attempts'),
+    name: document.getElementById('cand-name') ? document.getElementById('cand-name').value : '',
+    email: document.getElementById('cand-email') ? document.getElementById('cand-email').value : '',
+    phone: document.getElementById('cand-phone') ? document.getElementById('cand-phone').value : '',
+    linkedin: document.getElementById('cand-linkedin') ? document.getElementById('cand-linkedin').value : '',
+    attemptNumber: localStorage.getItem('dhl_attempts') || '1',
     status: reason,
     submittedAt: new Date().toISOString(),
     responses: activeQuestions.map(q => ({
@@ -149,9 +176,12 @@ function submitAssessment(reason) {
   };
 
   console.log("Candidate Final Submission Payload:", candidateData);
-  
-  document.getElementById('submission-message').innerHTML = `
-    Your test results have been securely recorded. The <strong>DHL HR Team</strong> will review your submission and contact you directly.
-  `;
+
+  const subMsg = document.getElementById('submission-message');
+  if (subMsg) {
+    subMsg.innerHTML = `
+      Your test results have been securely recorded. The <strong>DHL HR Team</strong> will review your submission and contact you directly.
+    `;
+  }
   showPage('page-3');
 }
