@@ -97,9 +97,9 @@ function submitAssessment(reason) {
 
   console.log("Candidate Final Submission:", candidateData);
   
-  document.getElementById('submission-message').innerHTML = `
-    <strong>Status:</strong> Submitted (${reason})<br>
-    Your test results are logged. The recruitment team will reach out to <strong>${candidateData.email}</strong>.
-  `;
+ document.getElementById('submission-message').innerHTML = `
+  <strong>Status:</strong> Submitted (${reason})<br>
+  Your test results are logged. The <strong>DHL HR Team</strong> will reach out to you directly regarding the next steps.
+`;
   showPage('page-4');
 }
