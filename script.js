@@ -1,6 +1,8 @@
-let timeRemaining = 45 * 60; // 45 Minutes in seconds
+let timeRemaining = 45 * 60; // 45 Minutes
 let timerInterval = null;
-let attempts = parseInt(localStorage.getItem('dhl_attempts') || '0');
+let currentQuestionIndex = 0;
+let activeQuestions = [];
+let userAnswers = {};
 
 // Block Copy, Paste, Cut, Right-Click
 document.addEventListener('copy', (e) => e.preventDefault());
@@ -13,40 +15,73 @@ function showPage(pageId) {
   document.getElementById(pageId).classList.add('active');
 }
 
-function goToInstructions() {
+function startAssessmentProcess() {
   const name = document.getElementById('cand-name').value.trim();
   const email = document.getElementById('cand-email').value.trim();
   const phone = document.getElementById('cand-phone').value.trim();
+  const linkedin = document.getElementById('cand-linkedin').value.trim();
 
-  if (!name || !email || !phone) {
-    alert("Please fill in all candidate details.");
+  const checkPolicy = document.getElementById('check-policy').checked;
+  const checkW2 = document.getElementById('check-w2').checked;
+  const checkProctor = document.getElementById('check-proctor').checked;
+  const checkInstructions = document.getElementById('check-instructions').checked;
+
+  if (!name || !email || !phone || !linkedin) {
+    alert("Please complete all candidate profile fields before proceeding.");
     return;
   }
 
- 
+  if (!checkPolicy || !checkW2 || !checkProctor || !checkInstructions) {
+    alert("You must acknowledge all mandatory compliance, policy, and candidate instruction items to proceed.");
+    return;
+  }
 
-  showPage('page-2');
-}
-
-function startAssessment() {
-  attempts++;
+  // Increment attempts counter
+  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '0') + 1;
   localStorage.setItem('dhl_attempts', attempts);
 
-  showPage('page-3');
-  renderQuestions();
+  // Load Questions set dynamically based on attempt
+  activeQuestions = getQuestionsForCurrentAttempt();
+  currentQuestionIndex = 0;
+
+  showPage('page-2');
+  loadQuestion(currentQuestionIndex);
   startTimer();
   activateTabProtection();
 }
 
-function renderQuestions() {
-  const container = document.getElementById('questions-container');
-  container.innerHTML = testQuestions.map(q => `
-    <div class="question-block">
-      <div class="question-title">${q.title}</div>
-      <div class="question-desc">${q.description}</div>
-      <textarea class="code-editor" id="ans-${q.id}" placeholder="Write your Java code and architectural solution here..." required></textarea>
-    </div>
-  `).join('');
+function loadQuestion(index) {
+  const q = activeQuestions[index];
+  document.getElementById('question-progress-label').textContent = `QUESTION ${index + 1} OF ${activeQuestions.length}`;
+  document.getElementById('q-title').textContent = q.title;
+  document.getElementById('q-desc').textContent = q.description;
+
+  const codeArea = document.getElementById('current-code-answer');
+  codeArea.value = userAnswers[q.id] || '';
+
+  // Button Visibility Controls
+  document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
+  if (index === activeQuestions.length - 1) {
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-submit').style.display = 'inline-block';
+  } else {
+    document.getElementById('btn-next').style.display = 'inline-block';
+    document.getElementById('btn-submit').style.display = 'none';
+  }
+}
+
+function saveCurrentAnswer() {
+  const q = activeQuestions[currentQuestionIndex];
+  const codeArea = document.getElementById('current-code-answer');
+  userAnswers[q.id] = codeArea.value;
+}
+
+function navigateQuestion(direction) {
+  saveCurrentAnswer();
+  currentQuestionIndex += direction;
+  if (currentQuestionIndex < 0) currentQuestionIndex = 0;
+  if (currentQuestionIndex >= activeQuestions.length) currentQuestionIndex = activeQuestions.length - 1;
+  loadQuestion(currentQuestionIndex);
 }
 
 function startTimer() {
@@ -59,7 +94,7 @@ function startTimer() {
 
     if (timeRemaining <= 0) {
       clearInterval(timerInterval);
-      alert("Time is up! Submitting your answers automatically.");
+      alert("Time expired! Submitting your assessment automatically.");
       submitAssessment('Time Expired');
     }
   }, 1000);
@@ -68,52 +103,55 @@ function startTimer() {
 // Security Enforcement: Anti Tab-Switching
 function activateTabProtection() {
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && document.getElementById('page-3').classList.contains('active')) {
+    if (document.hidden && document.getElementById('page-2').classList.contains('active')) {
       clearInterval(timerInterval);
-      alert("SECURITY VIOLATION: You switched tabs or minimized the browser window. Your test is terminated and submitted.");
-      submitAssessment('Security Breach (Tab Switch Detected)');
+      alert("SECURITY VIOLATION: Tab switch or window minimization detected. Assessment is terminated and submitted.");
+      submitAssessment('Security Violation (Tab Switch)');
     }
   });
 }
 
+function validateAndSubmit() {
+  saveCurrentAnswer();
+  let missing = false;
+
+  activeQuestions.forEach(q => {
+    if (!userAnswers[q.id] || userAnswers[q.id].trim() === "") {
+      missing = true;
+    }
+  });
+
+  if (missing) {
+    alert("Please write solutions for all 5 questions before submitting.");
+    return;
+  }
+
+  submitAssessment('Manual Submission');
+}
+
 function submitAssessment(reason) {
   clearInterval(timerInterval);
+  saveCurrentAnswer();
   
   const candidateData = {
     name: document.getElementById('cand-name').value,
     email: document.getElementById('cand-email').value,
     phone: document.getElementById('cand-phone').value,
+    linkedin: document.getElementById('cand-linkedin').value,
+    attemptNumber: localStorage.getItem('dhl_attempts'),
     status: reason,
     submittedAt: new Date().toISOString(),
-    responses: testQuestions.map(q => ({
+    responses: activeQuestions.map(q => ({
       questionId: q.id,
       title: q.title,
-      codeAnswer: document.getElementById(`ans-${q.id}`) ? document.getElementById(`ans-${q.id}`).value : 'N/A'
+      codeAnswer: userAnswers[q.id] || 'N/A'
     }))
   };
 
-  console.log("Candidate Final Submission:", candidateData);
+  console.log("Candidate Final Submission Payload:", candidateData);
   
- document.getElementById('submission-message').innerHTML = `
-  <strong>Status:</strong> Submitted (${reason})<br>
-  Your test results are logged. The <strong>DHL HR Team</strong> will reach out to you directly regarding the next steps.
-`;
-  showPage('page-4');
-}
-function validateAndSubmit() {
-  let allAnswered = true;
-  
-  testQuestions.forEach(q => {
-    const ansElem = document.getElementById(`ans-${q.id}`);
-    if (!ansElem || ansElem.value.trim() === "") {
-      allAnswered = false;
-    }
-  });
-
-  if (!allAnswered) {
-    alert("Please write the answer for all questions before submitting the assessment!");
-    return;
-  }
-
-  submitAssessment('Manual Submission');
+  document.getElementById('submission-message').innerHTML = `
+    Your test results have been securely recorded. The <strong>DHL HR Team</strong> will review your submission and contact you directly.
+  `;
+  showPage('page-3');
 }
