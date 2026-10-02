@@ -39,17 +39,22 @@ function startAssessmentProcess() {
     return;
   }
 
+  // Pre-fill Page 3 fields with Page 1 inputs
+  if (document.getElementById('final-cand-name')) document.getElementById('final-cand-name').value = name;
+  if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
+  if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
+
   // Increment attempts counter
   let attempts = parseInt(localStorage.getItem('dhl_attempts') || '0') + 1;
   localStorage.setItem('dhl_attempts', attempts);
 
-  // Load Questions set dynamically based on attempt
+  // Load Questions set dynamically
   if (typeof getQuestionsForCurrentAttempt === "function") {
     activeQuestions = getQuestionsForCurrentAttempt();
   } else if (typeof testQuestions !== "undefined") {
     activeQuestions = testQuestions;
   } else {
-    alert("Error loading questions. Please contact support.");
+    alert("Error loading question set. Please refresh.");
     return;
   }
 
@@ -122,7 +127,7 @@ function startTimer() {
     if (timeRemaining <= 0) {
       clearInterval(timerInterval);
       alert("Time expired! Submitting your assessment automatically.");
-      submitAssessment('Time Expired');
+      goToAgencyVerification('Time Expired');
     }
   }, 1000);
 }
@@ -132,41 +137,67 @@ function activateTabProtection() {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && document.getElementById('page-2').classList.contains('active')) {
       clearInterval(timerInterval);
-      alert("SECURITY VIOLATION: Tab switch or window minimization detected. Assessment is terminated and submitted.");
-      submitAssessment('Security Violation (Tab Switch)');
+      alert("SECURITY VIOLATION: Tab switch or window minimization detected. Directing to final submission.");
+      goToAgencyVerification('Security Violation (Tab Switch)');
     }
   });
 }
 
-function validateAndSubmit() {
+function handleAgencyChange(selectElem) {
+  const otherGroup = document.getElementById('other-agency-group');
+  const otherInput = document.getElementById('other-agency-input');
+  if (selectElem.value === 'OTHER') {
+    otherGroup.style.display = 'block';
+    otherInput.required = true;
+  } else {
+    otherGroup.style.display = 'none';
+    otherInput.required = false;
+    otherInput.value = '';
+  }
+}
+
+function goToAgencyVerification(reason) {
+  clearInterval(timerInterval);
   saveCurrentAnswer();
-  let missing = false;
+  showPage('page-3');
+}
 
-  activeQuestions.forEach(q => {
-    if (!userAnswers[q.id] || userAnswers[q.id].trim() === "") {
-      missing = true;
-    }
-  });
+function executeFinalSubmission() {
+  const name = document.getElementById('final-cand-name').value.trim();
+  const phone = document.getElementById('final-cand-phone').value.trim();
+  const email = document.getElementById('final-cand-email').value.trim();
+  
+  const agencySelect = document.getElementById('agency-select').value;
+  const otherAgency = document.getElementById('other-agency-input').value.trim();
+  const joining = document.getElementById('joining-timeline').value;
+  const workAuth = document.getElementById('work-authorization').value;
+  const declChecked = document.getElementById('check-final-decl').checked;
 
-  if (missing) {
-    alert("Please write solutions for all questions before submitting.");
+  if (!name || !phone || !email || !agencySelect || !joining || !workAuth) {
+    alert("Please complete all candidate and consulting agency verification fields.");
     return;
   }
 
-  submitAssessment('Manual Submission');
-}
+  if (agencySelect === 'OTHER' && !otherAgency) {
+    alert("Please specify the exact name of your consulting firm.");
+    return;
+  }
 
-function submitAssessment(reason) {
-  clearInterval(timerInterval);
-  saveCurrentAnswer();
+  if (!declChecked) {
+    alert("You must acknowledge the candidate authorization declaration before submitting.");
+    return;
+  }
 
-  const candidateData = {
-    name: document.getElementById('cand-name') ? document.getElementById('cand-name').value : '',
-    email: document.getElementById('cand-email') ? document.getElementById('cand-email').value : '',
-    phone: document.getElementById('cand-phone') ? document.getElementById('cand-phone').value : '',
-    linkedin: document.getElementById('cand-linkedin') ? document.getElementById('cand-linkedin').value : '',
+  const finalAgencyName = agencySelect === 'OTHER' ? otherAgency : agencySelect;
+
+  const candidatePayload = {
+    candidateName: name,
+    email: email,
+    phone: phone,
+    consultingAgency: finalAgencyName,
+    earliestJoining: joining,
+    workAuthorization: workAuth,
     attemptNumber: localStorage.getItem('dhl_attempts') || '1',
-    status: reason,
     submittedAt: new Date().toISOString(),
     responses: activeQuestions.map(q => ({
       questionId: q.id,
@@ -175,13 +206,12 @@ function submitAssessment(reason) {
     }))
   };
 
-  console.log("Candidate Final Submission Payload:", candidateData);
+  console.log("DHL Enterprise Final Payload Transmitted:", candidatePayload);
 
-  const subMsg = document.getElementById('submission-message');
-  if (subMsg) {
-    subMsg.innerHTML = `
-      Your test results have been securely recorded. The <strong>DHL HR Team</strong> will review your submission and contact you directly.
-    `;
-  }
-  showPage('page-3');
+  // Populate Page 4 Confirmation Receipt
+  document.getElementById('ack-name').textContent = name;
+  document.getElementById('ack-agency').textContent = finalAgencyName;
+  document.getElementById('ack-joining').textContent = joining;
+
+  showPage('page-4');
 }
