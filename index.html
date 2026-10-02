@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DHL - Lead Java Developer Assessment Portal</title>
+  <title>DHL Candidate Assessment Portal - Technical Evaluation</title>
   <style>
     :root {
       --dhl-red: #D40511;
       --dhl-yellow: #FFCC00;
       --bg-dark: #121212;
       --card-bg: #1E1E1E;
+      --card-inner: #262626;
       --text-light: #E0E0E0;
       --border-color: #333;
     }
@@ -17,27 +18,55 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-light); user-select: none; -webkit-user-select: none; }
 
-    .header { background: var(--dhl-red); border-bottom: 4px solid var(--dhl-yellow); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
-    .header h1 { color: #FFF; font-size: 20px; font-weight: 800; letter-spacing: 1px; }
-    .header .badge { background: var(--dhl-yellow); color: #000; padding: 4px 12px; font-weight: bold; border-radius: 3px; font-size: 12px; }
+    /* Corporate Header */
+    .header { background: var(--dhl-red); border-bottom: 5px solid var(--dhl-yellow); padding: 18px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .header-title-box { display: flex; flex-direction: column; }
+    .header h1 { color: #FFF; font-size: 22px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; }
+    .header .sub-header-tag { color: var(--dhl-yellow); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; margin-top: 2px; }
+    .header .badge-container { text-align: right; }
+    .header .badge { background: var(--dhl-yellow); color: #000; padding: 5px 14px; font-weight: 800; border-radius: 3px; font-size: 12px; display: inline-block; }
+    .header .w2-tag { color: #FFF; font-size: 11px; margin-top: 4px; font-weight: 600; }
 
-    .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
-    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .container { max-width: 950px; margin: 35px auto; padding: 0 20px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 35px; box-shadow: 0 12px 30px rgba(0,0,0,0.6); }
 
     .page { display: none; }
     .page.active { display: block; }
 
-    h2 { margin-bottom: 15px; color: #FFF; border-bottom: 2px solid var(--dhl-red); padding-bottom: 8px; }
-    p { margin-bottom: 15px; line-height: 1.6; color: #AAA; }
+    h2 { margin-bottom: 12px; color: #FFF; border-bottom: 2px solid var(--dhl-red); padding-bottom: 10px; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* JD Section Styling */
+    .jd-section { background: var(--card-inner); border: 1px solid #383838; border-radius: 6px; padding: 25px; margin: 20px 0 30px 0; max-height: 380px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--dhl-red) #1A1A1A; }
+    .jd-header { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 18px; }
+    .jd-title { font-size: 18px; font-weight: bold; color: var(--dhl-yellow); margin-bottom: 5px; }
+    .jd-meta { font-size: 13px; color: #BBB; font-weight: 600; display: flex; gap: 20px; }
+    .jd-meta span { background: #181818; padding: 3px 10px; border-radius: 4px; border: 1px solid #333; }
+    
+    .jd-content h3 { font-size: 14px; color: #FFF; margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid var(--dhl-red); padding-left: 8px; }
+    .jd-content p { font-size: 13.5px; line-height: 1.6; color: #CCC; margin-bottom: 12px; }
+    .jd-content ul { margin-left: 20px; margin-bottom: 15px; }
+    .jd-content li { font-size: 13.5px; color: #BBB; margin-bottom: 6px; line-height: 1.5; }
 
-    .form-group { margin-bottom: 18px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; color: #CCC; }
-    input, textarea { width: 100%; padding: 12px; background: #2A2A2A; border: 1px solid #444; color: #FFF; border-radius: 4px; font-size: 14px; }
+    /* Form Inputs */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #DDD; font-size: 13px; }
+    input, textarea { width: 100%; padding: 12px; background: #2A2A2A; border: 1px solid #444; color: #FFF; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; }
     input:focus, textarea:focus { outline: none; border-color: var(--dhl-yellow); }
 
-    .rules-list { margin: 20px 0; background: #252525; padding: 20px 20px 20px 40px; border-left: 4px solid var(--dhl-yellow); border-radius: 4px; }
-    .rules-list li { margin-bottom: 10px; color: #DDD; font-size: 14px; }
-    .warning { color: #FF5555; font-weight: bold; }
+    /* Important Instructions Box */
+    .instructions-box { background: #181818; border-left: 4px solid var(--dhl-yellow); border-radius: 4px; padding: 22px; margin: 25px 0 15px 0; }
+    .instructions-box h3 { font-size: 15px; color: var(--dhl-yellow); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px; }
+    .instructions-list { margin-left: 20px; }
+    .instructions-list li { color: #DDD; font-size: 13.5px; margin-bottom: 8px; line-height: 1.5; }
+    .instructions-list .warning-text { color: #FF5555; font-weight: bold; }
+
+    /* Compliance & Policies Section */
+    .compliance-box { background: #181818; border: 1px solid #333; border-radius: 6px; padding: 20px; margin: 15px 0 25px 0; }
+    .compliance-box h3 { font-size: 14px; color: #FFF; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .checkbox-group { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer; }
+    .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--dhl-red); cursor: pointer; }
+    .checkbox-group label { font-size: 12.5px; color: #AAA; font-weight: normal; cursor: pointer; line-height: 1.4; }
 
     .timer-box { font-size: 18px; font-weight: bold; background: #000; color: var(--dhl-yellow); padding: 10px 15px; border-radius: 4px; border: 1px solid var(--dhl-yellow); display: inline-block; margin-bottom: 20px; }
     .question-block { margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 20px; }
@@ -45,81 +74,161 @@
     .question-desc { font-size: 14px; color: #BBB; white-space: pre-line; margin-bottom: 12px; }
     textarea.code-editor { font-family: 'Courier New', Courier, monospace; min-height: 140px; background: #141414; color: #00FF66; resize: vertical; }
 
-    .btn { background: var(--dhl-red); color: #FFF; border: none; padding: 12px 25px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; width: 100%; font-size: 16px; margin-top: 10px; }
-    .btn:hover { background: #B0040E; }
+    .btn { background: var(--dhl-red); color: #FFF; border: none; padding: 14px 25px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; width: 100%; font-size: 15px; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 10px; }
+    .btn:hover { background: #B0040E; box-shadow: 0 4px 12px rgba(212, 5, 17, 0.4); }
   </style>
 </head>
 <body>
 
+  <!-- Official DHL Header -->
   <div class="header">
-    <h1>DHL <span>Technical Assessment Portal</span></h1>
-    <div class="badge">LEAD JAVA CONSULTANT</div>
+    <div class="header-title-box">
+      <h1>DHL Candidate Assessment Portal</h1>
+      <div class="sub-header-tag">GLOBAL SUPPLY CHAIN & DIGITAL APPLICATION ENGINEERING</div>
+    </div>
+    <div class="badge-container">
+      <div class="badge">LEAD JAVA CONSULTANT</div>
+      <div class="w2-tag">For W2 Submission - Final Assessment</div>
+    </div>
   </div>
 
   <div class="container">
     
-    <!-- PAGE 1: Candidate Details -->
+    <!-- PAGE 1: Job Description, Profile, Instructions & Compliance -->
     <div id="page-1" class="page active">
       <div class="card">
-        <h2>Welcome Consultant</h2>
-        <p>Position: <strong>Java Developer – Modern Application Engineering (Client: DHL)</strong></p>
+        <h2>Consultant Verification & Role Context</h2>
+        <p>Welcome to the official DHL Technical Evaluation Portal. Please review the position overview and complete your profile details below to initiate your final technical assessment.</p>
         
+        <!-- Job Details Box -->
+        <div class="jd-section">
+          <div class="jd-header">
+            <div class="jd-title">Java Developer – Modern Application Engineering</div>
+            <div class="jd-meta">
+              <span><strong>Client:</strong> DHL Global Services</span>
+              <span><strong>Location:</strong> Mossville, IL – Hybrid (3 days onsite)</span>
+              <span><strong>Target Experience:</strong> 5–7+ Years</span>
+            </div>
+          </div>
+
+          <div class="jd-content">
+            <p>We are looking for a strong Java Developer with 5–7+ years of hands-on experience building modern, scalable enterprise applications. The role requires solid backend engineering along with cloud-native development, distributed systems, API engineering, containerization, observability, and modern CI/CD practices.</p>
+
+            <h3>Must-Have Technical Skills</h3>
+            <ul>
+              <li><strong>Java 17+</strong> with strong Core Java fundamentals & concurrency patterns</li>
+              <li><strong>Spring Boot 3.x</strong> / Spring Framework core architecture</li>
+              <li><strong>Spring Security</strong> / OAuth2 / JWT stateless authentication</li>
+              <li><strong>Microservices Architecture</strong> and RESTful APIs</li>
+              <li><strong>Apache Kafka</strong> & event-driven asynchronous messaging patterns</li>
+              <li><strong>Hibernate / JPA</strong> with SQL and database fundamentals (PostgreSQL / Oracle)</li>
+              <li><strong>AWS or Azure</strong> cloud native development</li>
+              <li><strong>Docker & Kubernetes / OpenShift</strong> containerized deployment</li>
+            </ul>
+
+            <h3>Advanced & Modern Technology Exposure</h3>
+            <ul>
+              <li>Java 21 modern features (Virtual Threads, Pattern Matching, Records)</li>
+              <li>Spring Cloud, Service Discovery, Centralized Config, API Gateway</li>
+              <li>Kafka Streams, Redis / Distributed Caching, Elasticsearch / OpenSearch</li>
+              <li>Prometheus / Grafana metrics, Helm charts, and infrastructure-aware development</li>
+            </ul>
+
+            <h3>Core Responsibilities</h3>
+            <ul>
+              <li>Design, develop, test, and maintain scalable Java/Spring Boot microservices.</li>
+              <li>Build and integrate REST APIs and high-throughput event-driven systems with Kafka.</li>
+              <li>Deploy, monitor, and troubleshoot enterprise applications in Kubernetes/OpenShift.</li>
+              <li>Implement OAuth2/JWT security standards and automated unit/integration test suites.</li>
+              <li>Collaborate with enterprise architects, DevOps, and delivery managers in Agile/Scrum.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Form Details -->
         <form id="candidate-form">
-          <div class="form-group">
-            <label>Full Name *</label>
-            <input type="text" id="cand-name" required placeholder="e.g. John Doe">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Full Legal Name *</label>
+              <input type="text" id="cand-name" required placeholder="e.g. John Doe">
+            </div>
+            <div class="form-group">
+              <label>Email Address *</label>
+              <input type="email" id="cand-email" required placeholder="john.doe@example.com">
+            </div>
+            <div class="form-group">
+              <label>Contact Phone Number *</label>
+              <input type="text" id="cand-phone" required placeholder="+1 (555) 019-2831">
+            </div>
+            <div class="form-group">
+              <label>LinkedIn Profile / Portfolio Link *</label>
+              <input type="text" id="cand-linkedin" required placeholder="https://linkedin.com/in/username">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Email Address *</label>
-            <input type="email" id="cand-email" required placeholder="john.doe@example.com">
+
+          <!-- Important Candidate Instructions -->
+          <div class="instructions-box">
+            <h3>⚠️ Important Assessment Guidelines & Proctoring Rules</h3>
+            <ul class="instructions-list">
+              <li><strong>Fixed Duration & Timer:</strong> The assessment has a strict timer of <strong>45 Minutes</strong> for all 7 architectural & coding questions. The session will auto-submit when the timer expires.</li>
+              <li><span class="warning-text">Tab Switch & Minimization Prohibition:</span> Opening new tabs, switching applications, or minimizing the browser window will trigger security proctoring, resulting in immediate test termination and auto-submission.</li>
+              <li><strong>Strict Copy-Paste Restrictions:</strong> Copying question text out of the portal or pasting external source code into solution fields is completely disabled.</li>
+              <li><strong>IP & Attempt Enforcement:</strong> Each candidate/IP address is allocated maximum <strong>2 attempt entries</strong>. Multi-device attempts will be flagged by security.</li>
+              <li><strong>Environment Requirement:</strong> Candidates must maintain an uninterrupted network connection and stay on full-screen browser mode throughout the evaluation.</li>
+              <li><strong>Coding Integrity:</strong> All submissions are scanned via automated enterprise plagiarism check engines for algorithmic integrity.</li>
+            </ul>
           </div>
-          <div class="form-group">
-            <label>Phone Number *</label>
-            <input type="text" id="cand-phone" required placeholder="+1 555-0199">
+
+          <!-- Compliance Checklist -->
+          <div class="compliance-box">
+            <h3>DHL Candidate Compliance & Policy Acknowledgements</h3>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="check-policy" required>
+              <label for="check-policy">I acknowledge that I have read the job requirements above and agree to DHL candidate evaluation policies, data privacy guidelines, and non-disclosure terms.</label>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="check-w2" required>
+              <label for="check-w2">I confirm that I am applying for Direct W2 employment and am eligible to work on hybrid schedule (3 days onsite in Mossville, IL).</label>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="check-proctor" required>
+              <label for="check-proctor">I understand that this technical assessment is proctored with active tab-switch detection, automated timers, and copy-paste prevention.</label>
+            </div>
+
+            <div class="checkbox-group">
+              <input type="checkbox" id="check-instructions" required>
+              <label for="check-instructions">I have read, understood, and agree to strictly follow all the Important Candidate Instructions & Assessment Guidelines mentioned above.</label>
+            </div>
           </div>
-          <button type="button" class="btn" onclick="goToInstructions()">Proceed to Instructions</button>
+
+          <button type="button" class="btn" onclick="goToInstructions()">Begin Technical Assessment</button>
         </form>
       </div>
     </div>
 
-    <!-- PAGE 2: Instructions -->
+    <!-- PAGE 2: Live Test Interface -->
     <div id="page-2" class="page">
       <div class="card">
-        <h2>Assessment Guidelines & Security Rules</h2>
-        <p>Please read these proctoring rules carefully before beginning:</p>
-        
-        <ul class="rules-list">
-          <li><strong>Fixed Time:</strong> You have strictly <strong>45 Minutes</strong> to complete all 7 coding & architectural questions.</li>
-          <li><span class="warning">Tab Switch / Minimizing Prohibition:</span> Moving to another tab, opening new windows, or minimizing Chrome will automatically lock and submit your assessment immediately.</li>
-          <li><strong>Attempt Limit:</strong> Maximum <strong>2 total attempts</strong> allowed per candidate / IP address.</li>
-          <li><strong>No Copy-Paste:</strong> Copying questions out or pasting code into the portal is strictly disabled.</li>
-          <li><strong>Auto-Submit:</strong> When the time runs out, your code answers will be automatically recorded.</li>
-        </ul>
-
-        <button class="btn" onclick="startAssessment()">I Accept Rules & Start Test</button>
-      </div>
-    </div>
-
-    <!-- PAGE 3: Question Test Area -->
-    <div id="page-3" class="page">
-      <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2>Coding Assessment</h2>
+          <h2>Technical Assessment</h2>
           <div class="timer-box" id="timer-display">45:00</div>
         </div>
         
         <form id="assessment-form">
           <div id="questions-container"></div>
-         <button type="button" class="btn" onclick="validateAndSubmit()">Submit Assessment</button>
+          <button type="button" class="btn" onclick="validateAndSubmit()">Submit Final Assessment</button>
         </form>
       </div>
     </div>
 
-    <!-- PAGE 4: Thank You Screen -->
-    <div id="page-4" class="page">
+    <!-- PAGE 3: Completion Screen -->
+    <div id="page-3" class="page">
       <div class="card" style="text-align: center;">
-        <h2 style="border: none; color: #00FF66;">Assessment Submitted!</h2>
-        <p id="submission-message">Thank you. Your code responses have been logged securely and sent to the DHL Technical Evaluation team.</p>
+        <h2 style="border: none; color: #00FF66;">Assessment Successfully Submitted!</h2>
+        <p id="submission-message">Your technical assessment answers have been encrypted and logged. The <strong>DHL HR Team</strong> will review your evaluation and get in touch with you directly.</p>
       </div>
     </div>
 
