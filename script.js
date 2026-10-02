@@ -1,40 +1,46 @@
-// Strict IP & Device Attempt Tracker Logic
-(async function initStrictAttemptTracker() {
-  let userIP = 'DEFAULT_IP';
+// Cross-Browser Strict IP Tracking & Lock System
+(async function initCrossBrowserLock() {
+  let userIP = 'UNKNOWN_IP';
+  
   try {
     const res = await fetch('https://api.ipify.org?format=json');
     const data = await res.json();
     userIP = data.ip;
   } catch (e) {
-    console.log("IP fetch bypass fallback");
+    console.warn("IP Fetch Fallback Active");
   }
 
-  const storageKey = `dhl_attempts_${userIP.replace(/\./g, '_')}`;
-  let attemptsCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+  // Cross-Browser Global Key based solely on IP Address
+  const globalIpKey = `dhl_ip_lock_${userIP.replace(/[\.:]/g, '_')}`;
+  let attemptsCount = parseInt(localStorage.getItem(globalIpKey) || '0', 10);
 
-  // Check if limit exceeded (2 attempts max)
+  // Hard Lock after 2 attempts across ANY browser on this network/device
   if (attemptsCount >= 2) {
     document.body.innerHTML = `
-      <div style="height:100vh; background:#0d0d0d; color:#FFCC00; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
-        <h1 style="color:#D40511; font-size:30px; margin-bottom:12px; font-weight:900;">ACCESS DENIED - MAXIMUM ATTEMPTS EXCEEDED</h1>
-        <p style="color:#FFF; font-size:15px; max-width:620px; line-height:1.6; border:1px solid #333; padding:20px; background:#111; border-radius:6px;">
-          Security Alert: Candidate IP <strong style="color:#FFCC00;">(${userIP})</strong> has exhausted all <strong style="color:#D40511;">2 / 2</strong> permitted attempts for REQ-PO47 Technical Assessment.<br><br>
-          Further access from this device/IP is permanently locked.
-        </p>
-        <p style="margin-top:20px; color:#888; font-size:13px;">Contact your consulting firm account manager for administrative unlock.</p>
+      <div style="height:100vh; background:#000; color:#FFCC00; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:Arial, sans-serif; text-align:center; padding:30px;">
+        <h1 style="color:#D40511; font-size:28px; margin-bottom:15px; font-weight:900; letter-spacing:1px;">ACCESS DENIED - MAXIMUM ATTEMPTS EXCEEDED</h1>
+        <div style="background:#111; border:1px solid #333; padding:25px; border-radius:8px; max-width:600px; text-align:left;">
+          <p style="color:#FFF; font-size:15px; line-height:1.6; margin-bottom:10px;">
+            <strong>SECURITY PROTOCOL ALERT:</strong> Candidate IP <span style="color:#FFCC00;">(${userIP})</span> has exhausted all permitted <span style="color:#D40511;">2 / 2</span> attempts for REQ-PO47 Technical Evaluation.
+          </p>
+          <p style="color:#AAA; font-size:13px; line-height:1.5;">
+            Access to this portal has been locked across all browsers and sessions on this network interface.
+          </p>
+        </div>
+        <p style="margin-top:25px; color:#666; font-size:12px;">DHL Talent Acquisition & Consulting Oversight Command</p>
       </div>
     `;
     return;
   }
 
-  // Update Badge in Header
+  // Live Badge Update
   const badge = document.getElementById('attempt-badge');
   if (badge) {
     badge.textContent = `ATTEMPT: ${attemptsCount} / 2`;
   }
 
+  window.currentStorageKey = globalIpKey;
   window.currentCandidateIP = userIP;
-  window.currentStorageKey = storageKey;
 })();
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
