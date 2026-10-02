@@ -27,7 +27,7 @@
     .header .badge { background: var(--dhl-yellow); color: #000; padding: 5px 14px; font-weight: 800; border-radius: 3px; font-size: 12px; display: inline-block; }
     .header .w2-tag { color: #FFF; font-size: 11px; margin-top: 4px; font-weight: 600; }
 
-    .container { max-width: 950px; margin: 35px auto; padding: 0 20px; }
+    .container { max-width: 980px; margin: 30px auto; padding: 0 20px; }
     .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 35px; box-shadow: 0 12px 30px rgba(0,0,0,0.6); }
 
     .page { display: none; }
@@ -35,8 +35,8 @@
 
     h2 { margin-bottom: 12px; color: #FFF; border-bottom: 2px solid var(--dhl-red); padding-bottom: 10px; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
     
-    /* JD Section Styling */
-    .jd-section { background: var(--card-inner); border: 1px solid #383838; border-radius: 6px; padding: 25px; margin: 20px 0 30px 0; max-height: 380px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--dhl-red) #1A1A1A; }
+    /* JD Section */
+    .jd-section { background: var(--card-inner); border: 1px solid #383838; border-radius: 6px; padding: 25px; margin: 20px 0 30px 0; max-height: 350px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--dhl-red) #1A1A1A; }
     .jd-header { border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 18px; }
     .jd-title { font-size: 18px; font-weight: bold; color: var(--dhl-yellow); margin-bottom: 5px; }
     .jd-meta { font-size: 13px; color: #BBB; font-weight: 600; display: flex; gap: 20px; }
@@ -54,28 +54,39 @@
     input, textarea { width: 100%; padding: 12px; background: #2A2A2A; border: 1px solid #444; color: #FFF; border-radius: 4px; font-size: 14px; transition: border-color 0.2s; }
     input:focus, textarea:focus { outline: none; border-color: var(--dhl-yellow); }
 
-    /* Important Instructions Box */
+    /* Instructions Box */
     .instructions-box { background: #181818; border-left: 4px solid var(--dhl-yellow); border-radius: 4px; padding: 22px; margin: 25px 0 15px 0; }
-    .instructions-box h3 { font-size: 15px; color: var(--dhl-yellow); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px; }
+    .instructions-box h3 { font-size: 15px; color: var(--dhl-yellow); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.6px; }
     .instructions-list { margin-left: 20px; }
     .instructions-list li { color: #DDD; font-size: 13.5px; margin-bottom: 8px; line-height: 1.5; }
-    .instructions-list .warning-text { color: #FF5555; font-weight: bold; }
+    .warning-text { color: #FF5555; font-weight: bold; }
 
-    /* Compliance & Policies Section */
+    /* Compliance Box */
     .compliance-box { background: #181818; border: 1px solid #333; border-radius: 6px; padding: 20px; margin: 15px 0 25px 0; }
     .compliance-box h3 { font-size: 14px; color: #FFF; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
     .checkbox-group { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; cursor: pointer; }
     .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--dhl-red); cursor: pointer; }
     .checkbox-group label { font-size: 12.5px; color: #AAA; font-weight: normal; cursor: pointer; line-height: 1.4; }
 
-    .timer-box { font-size: 18px; font-weight: bold; background: #000; color: var(--dhl-yellow); padding: 10px 15px; border-radius: 4px; border: 1px solid var(--dhl-yellow); display: inline-block; margin-bottom: 20px; }
-    .question-block { margin-bottom: 30px; border-bottom: 1px solid #333; padding-bottom: 20px; }
-    .question-title { font-size: 16px; font-weight: bold; color: #FFF; margin-bottom: 8px; }
-    .question-desc { font-size: 14px; color: #BBB; white-space: pre-line; margin-bottom: 12px; }
-    textarea.code-editor { font-family: 'Courier New', Courier, monospace; min-height: 140px; background: #141414; color: #00FF66; resize: vertical; }
+    /* Test Pagination Styling */
+    .test-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--dhl-red); padding-bottom: 15px; margin-bottom: 20px; }
+    .question-progress { color: var(--dhl-yellow); font-weight: 800; font-size: 16px; letter-spacing: 0.5px; }
+    .timer-box { font-size: 18px; font-weight: bold; background: #000; color: var(--dhl-yellow); padding: 8px 16px; border-radius: 4px; border: 1px solid var(--dhl-yellow); }
 
-    .btn { background: var(--dhl-red); color: #FFF; border: none; padding: 14px 25px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; width: 100%; font-size: 15px; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 10px; }
+    .single-question-container { min-height: 380px; }
+    .question-title { font-size: 18px; font-weight: bold; color: #FFF; margin-bottom: 12px; border-left: 4px solid var(--dhl-yellow); padding-left: 10px; }
+    .question-desc { font-size: 14px; color: #CCC; white-space: pre-line; margin-bottom: 20px; line-height: 1.6; background: #161616; padding: 18px; border-radius: 6px; border: 1px solid #333; }
+
+    /* GitHub Real Editor Styling */
+    .editor-wrapper { position: relative; margin-top: 15px; border: 1px solid #444; border-radius: 6px; overflow: hidden; background: #0D1117; }
+    .editor-header { background: #161B22; padding: 8px 16px; font-size: 12px; color: #8B949E; border-bottom: 1px solid #30363D; display: flex; justify-content: space-between; font-weight: 600; }
+    textarea.code-editor { font-family: 'Consolas', 'Courier New', monospace; font-size: 14px; line-height: 1.5; background: #0D1117; color: #58A6FF; padding: 15px; min-height: 250px; border: none; outline: none; tab-size: 2; resize: vertical; box-sizing: border-box; }
+
+    .nav-btn-container { display: flex; justify-content: space-between; margin-top: 25px; gap: 15px; }
+    .btn { background: var(--dhl-red); color: #FFF; border: none; padding: 13px 25px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; font-size: 14px; text-transform: uppercase; letter-spacing: 0.8px; }
     .btn:hover { background: #B0040E; box-shadow: 0 4px 12px rgba(212, 5, 17, 0.4); }
+    .btn-secondary { background: #333; color: #FFF; }
+    .btn-secondary:hover { background: #444; }
   </style>
 </head>
 <body>
@@ -94,7 +105,7 @@
 
   <div class="container">
     
-    <!-- PAGE 1: Job Description, Profile, Instructions & Compliance -->
+    <!-- PAGE 1: Job Description, Profile & Instructions -->
     <div id="page-1" class="page active">
       <div class="card">
         <h2>Consultant Verification & Role Context</h2>
@@ -133,15 +144,6 @@
               <li>Kafka Streams, Redis / Distributed Caching, Elasticsearch / OpenSearch</li>
               <li>Prometheus / Grafana metrics, Helm charts, and infrastructure-aware development</li>
             </ul>
-
-            <h3>Core Responsibilities</h3>
-            <ul>
-              <li>Design, develop, test, and maintain scalable Java/Spring Boot microservices.</li>
-              <li>Build and integrate REST APIs and high-throughput event-driven systems with Kafka.</li>
-              <li>Deploy, monitor, and troubleshoot enterprise applications in Kubernetes/OpenShift.</li>
-              <li>Implement OAuth2/JWT security standards and automated unit/integration test suites.</li>
-              <li>Collaborate with enterprise architects, DevOps, and delivery managers in Agile/Scrum.</li>
-            </ul>
           </div>
         </div>
 
@@ -166,16 +168,14 @@
             </div>
           </div>
 
-          <!-- Important Candidate Instructions -->
+          <!-- Candidate Instructions -->
           <div class="instructions-box">
-            <h3>⚠️ Important Assessment Guidelines & Proctoring Rules</h3>
+            <h3>⚠️ Assessment Guidelines & Proctoring Security Rules</h3>
             <ul class="instructions-list">
-              <li><strong>Fixed Duration & Timer:</strong> The assessment has a strict timer of <strong>45 Minutes</strong> for all 7 architectural & coding questions. The session will auto-submit when the timer expires.</li>
-              <li><span class="warning-text">Tab Switch & Minimization Prohibition:</span> Opening new tabs, switching applications, or minimizing the browser window will trigger security proctoring, resulting in immediate test termination and auto-submission.</li>
-              <li><strong>Strict Copy-Paste Restrictions:</strong> Copying question text out of the portal or pasting external source code into solution fields is completely disabled.</li>
-              <li><strong>IP & Attempt Enforcement:</strong> Each candidate/IP address is allocated maximum <strong>2 attempt entries</strong>. Multi-device attempts will be flagged by security.</li>
-              <li><strong>Environment Requirement:</strong> Candidates must maintain an uninterrupted network connection and stay on full-screen browser mode throughout the evaluation.</li>
-              <li><strong>Coding Integrity:</strong> All submissions are scanned via automated enterprise plagiarism check engines for algorithmic integrity.</li>
+              <li><strong>Fixed Duration:</strong> You have strictly <strong>45 Minutes</strong> to complete all 5 architectural & coding challenges.</li>
+              <li><span class="warning-text">Tab Switch & Minimization Prohibition:</span> Switching tabs or minimizing the browser window will trigger automated proctoring, resulting in immediate test termination.</li>
+              <li><strong>Strict Copy-Paste Restrictions:</strong> Copying questions out or pasting code into the portal is strictly disabled.</li>
+              <li><strong>IP & Attempt Rules:</strong> Only 2 attempt entries are allowed per candidate. Question sets differ dynamically per attempt.</li>
             </ul>
           </div>
 
@@ -185,7 +185,7 @@
             
             <div class="checkbox-group">
               <input type="checkbox" id="check-policy" required>
-              <label for="check-policy">I acknowledge that I have read the job requirements above and agree to DHL candidate evaluation policies, data privacy guidelines, and non-disclosure terms.</label>
+              <label for="check-policy">I acknowledge that I have read the job requirements above and agree to DHL candidate evaluation policies and non-disclosure terms.</label>
             </div>
 
             <div class="checkbox-group">
@@ -200,27 +200,41 @@
 
             <div class="checkbox-group">
               <input type="checkbox" id="check-instructions" required>
-              <label for="check-instructions">I have read, understood, and agree to strictly follow all the Important Candidate Instructions & Assessment Guidelines mentioned above.</label>
+              <label for="check-instructions">I have read, understood, and agree to strictly follow all the Assessment Guidelines & Proctoring Security Rules mentioned above.</label>
             </div>
           </div>
 
-          <button type="button" class="btn" onclick="goToInstructions()">Begin Technical Assessment</button>
+          <button type="button" class="btn" style="width: 100%;" onclick="startAssessmentProcess()">Begin Technical Assessment</button>
         </form>
       </div>
     </div>
 
-    <!-- PAGE 2: Live Test Interface -->
+    <!-- PAGE 2: One-Question-Per-Page Live Test Interface -->
     <div id="page-2" class="page">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2>Technical Assessment</h2>
+        <div class="test-header">
+          <div class="question-progress" id="question-progress-label">QUESTION 1 OF 5</div>
           <div class="timer-box" id="timer-display">45:00</div>
         </div>
         
-        <form id="assessment-form">
-          <div id="questions-container"></div>
-          <button type="button" class="btn" onclick="validateAndSubmit()">Submit Final Assessment</button>
-        </form>
+        <div class="single-question-container">
+          <div class="question-title" id="q-title">Question Loading...</div>
+          <div class="question-desc" id="q-desc">Question description...</div>
+          
+          <div class="editor-wrapper">
+            <div class="editor-header">
+              <span>Solution.java (Java 21 Enterprise Environment)</span>
+              <span>UTF-8 | Monokai Syntax Enabled</span>
+            </div>
+            <textarea class="code-editor" id="current-code-answer" placeholder="// Write your complete, production-grade Java code solution here..." spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <div class="nav-btn-container">
+          <button type="button" class="btn btn-secondary" id="btn-prev" onclick="navigateQuestion(-1)">Previous Question</button>
+          <button type="button" class="btn" id="btn-next" onclick="navigateQuestion(1)">Next Question</button>
+          <button type="button" class="btn" id="btn-submit" style="display: none; background: #00AA44;" onclick="validateAndSubmit()">Submit Final Assessment</button>
+        </div>
       </div>
     </div>
 
