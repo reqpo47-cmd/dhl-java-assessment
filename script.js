@@ -330,3 +330,18 @@ function executeFinalSubmission() {
     }
   }, 40);
 }
+// Strict Proctoring: Auto-submit attempt on tab switch or window minimization
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    const key = window.currentStorageKey || 'dhl_attempts_default';
+    let currentCount = parseInt(localStorage.getItem(key) || '0', 10);
+    
+    // Auto increment attempt due to proctoring violation
+    localStorage.setItem(key, (currentCount + 1).toString());
+    
+    alert("SECURITY & PROCTORING VIOLATION DETECTED: You navigated away from the assessment tab/window. Your current attempt has been logged and auto-submitted.");
+    
+    // Force reload to apply attempt block / update portal status
+    location.reload();
+  }
+});
