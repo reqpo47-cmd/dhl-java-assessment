@@ -1,3 +1,11 @@
+// Sync Header Attempt Badge
+(function syncAttemptBadge() {
+  const attempts = localStorage.getItem('dhl_attempts') || '1';
+  const badge = document.getElementById('attempt-badge');
+  if (badge) {
+    badge.textContent = `ATTEMPT: ${attempts} / 2`;
+  }
+})();
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('splash-progress');
