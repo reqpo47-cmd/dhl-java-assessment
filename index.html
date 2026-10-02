@@ -14,7 +14,60 @@
       --text-light: #E0E0E0;
       --border-color: #333;
     }
-
+/* Enterprise Portal Splash Screen & Loader */
+    #splash-screen {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .splash-logo-box {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .splash-dhl-badge {
+      background: var(--dhl-red);
+      color: #FFF;
+      font-size: 28px;
+      font-weight: 900;
+      padding: 12px 30px;
+      border-bottom: 5px solid var(--dhl-yellow);
+      letter-spacing: 2px;
+      display: inline-block;
+      box-shadow: 0 10px 25px rgba(212, 5, 17, 0.4);
+    }
+    .splash-subtitle {
+      color: #888;
+      font-size: 12px;
+      letter-spacing: 2px;
+      margin-top: 12px;
+      text-transform: uppercase;
+    }
+    .loader-bar-container {
+      width: 280px;
+      height: 4px;
+      background: #222;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    .loader-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--dhl-yellow), var(--dhl-red));
+      transition: width 0.3s ease;
+    }
+    .splash-status-text {
+      color: var(--dhl-yellow);
+      font-size: 12px;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
     body { background-color: var(--bg-dark); color: var(--text-light); user-select: none; -webkit-user-select: none; }
 
