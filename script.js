@@ -1,10 +1,40 @@
-// Sync Header Attempt Badge
-(function syncAttemptBadge() {
-  const attempts = localStorage.getItem('dhl_attempts') || '1';
+// Strict IP & Device Attempt Tracker Logic
+(async function initStrictAttemptTracker() {
+  let userIP = 'DEFAULT_IP';
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    userIP = data.ip;
+  } catch (e) {
+    console.log("IP fetch bypass fallback");
+  }
+
+  const storageKey = `dhl_attempts_${userIP.replace(/\./g, '_')}`;
+  let attemptsCount = parseInt(localStorage.getItem(storageKey) || '0', 10);
+
+  // Check if limit exceeded (2 attempts max)
+  if (attemptsCount >= 2) {
+    document.body.innerHTML = `
+      <div style="height:100vh; background:#0d0d0d; color:#FFCC00; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:sans-serif; text-align:center; padding:20px;">
+        <h1 style="color:#D40511; font-size:30px; margin-bottom:12px; font-weight:900;">ACCESS DENIED - MAXIMUM ATTEMPTS EXCEEDED</h1>
+        <p style="color:#FFF; font-size:15px; max-width:620px; line-height:1.6; border:1px solid #333; padding:20px; background:#111; border-radius:6px;">
+          Security Alert: Candidate IP <strong style="color:#FFCC00;">(${userIP})</strong> has exhausted all <strong style="color:#D40511;">2 / 2</strong> permitted attempts for REQ-PO47 Technical Assessment.<br><br>
+          Further access from this device/IP is permanently locked.
+        </p>
+        <p style="margin-top:20px; color:#888; font-size:13px;">Contact your consulting firm account manager for administrative unlock.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Update Badge in Header
   const badge = document.getElementById('attempt-badge');
   if (badge) {
-    badge.textContent = `ATTEMPT: ${attempts} / 2`;
+    badge.textContent = `ATTEMPT: ${attemptsCount} / 2`;
   }
+
+  window.currentCandidateIP = userIP;
+  window.currentStorageKey = storageKey;
 })();
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
@@ -291,7 +321,10 @@ function executeFinalSubmission() {
         document.getElementById('ack-name').textContent = name;
         document.getElementById('ack-agency').textContent = finalAgencyName;
         document.getElementById('ack-joining').textContent = joining;
-
+// Increment Attempt Count on Successful Submission
+        const key = window.currentStorageKey || 'dhl_attempts_default';
+        let currentCount = parseInt(localStorage.getItem(key) || '0', 10);
+        localStorage.setItem(key, (currentCount + 1).toString()); 
         showPage('page-4');
       }, 500);
     }
