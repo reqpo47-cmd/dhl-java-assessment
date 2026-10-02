@@ -1,3 +1,33 @@
+// Enterprise Portal Initialization Animation Logic
+window.addEventListener('DOMContentLoaded', () => {
+  const progressBar = document.getElementById('splash-progress');
+  const statusText = document.getElementById('splash-status');
+  const splash = document.getElementById('splash-screen');
+
+  const steps = [
+    { pct: '25%', text: 'AUTHENTICATING DHL ENTERPRISE GATEWAY...' },
+    { pct: '55%', text: 'LOADING REQ-PO47 ASSESSMENT MODULES...' },
+    { pct: '85%', text: 'ENCRYPTING PROCTORING & IP SESSION...' },
+    { pct: '100%', text: 'PORTAL READY. LAUNCHING ENVIRONMENT...' }
+  ];
+
+  let currentStep = 0;
+  const interval = setInterval(() => {
+    if (currentStep < steps.length) {
+      if (progressBar) progressBar.style.width = steps[currentStep].pct;
+      if (statusText) statusText.textContent = steps[currentStep].text;
+      currentStep++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => {
+        if (splash) {
+          splash.style.opacity = '0';
+          splash.style.visibility = 'hidden';
+        }
+      }, 400);
+    }
+  }, 450);
+});
 let timeRemaining = 45 * 60; // 45 Minutes
 let timerInterval = null;
 let currentQuestionIndex = 0;
