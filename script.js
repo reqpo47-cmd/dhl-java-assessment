@@ -238,10 +238,54 @@ function executeFinalSubmission() {
 
   console.log("DHL Enterprise Final Payload Transmitted:", candidatePayload);
 
-  // Populate Page 4 Confirmation Receipt
-  document.getElementById('ack-name').textContent = name;
-  document.getElementById('ack-agency').textContent = finalAgencyName;
-  document.getElementById('ack-joining').textContent = joining;
+  // Trigger Animated Circular Processing Overlay
+  const overlay = document.getElementById('processing-overlay');
+  const stroke = document.getElementById('circle-stroke');
+  const percentText = document.getElementById('loader-percentage');
+  const statusText = document.getElementById('loader-status');
 
-  showPage('page-4');
+  if (overlay) overlay.style.display = 'flex';
+
+  const circumference = 408; // 2 * Math.PI * 65
+  let progress = 0;
+
+  const statusMessages = [
+    { at: 15, text: 'ENCRYPTING CANDIDATE CODE PAYLOAD...' },
+    { at: 40, text: 'RUNNING SECURITY & PROCTORING INTEGRITY CHECKS...' },
+    { at: 70, text: 'AUTHENTICATING VENDOR AGENCY CREDENTIALS...' },
+    { at: 90, text: 'TRANSMITTING REQ-PO47 RESULTS TO DHL TALENT VAULT...' },
+    { at: 100, text: 'SUBMISSION VERIFIED & SECURED!' }
+  ];
+
+  const interval = setInterval(() => {
+    progress += 2;
+    if (percentText) percentText.textContent = `${progress}%`;
+    
+    // Update SVG stroke circle dash offset
+    const offset = circumference - (progress / 100) * circumference;
+    if (stroke) {
+      stroke.style.strokeDashoffset = offset;
+      if (progress > 80) stroke.style.stroke = '#00FF66'; // Green on near complete
+    }
+
+    // Dynamic Status Update
+    const currentMsg = statusMessages.find(m => m.at === progress);
+    if (currentMsg && statusText) {
+      statusText.textContent = currentMsg.text;
+    }
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(() => {
+        if (overlay) overlay.style.display = 'none';
+
+        // Populate Page 4 Confirmation Receipt
+        document.getElementById('ack-name').textContent = name;
+        document.getElementById('ack-agency').textContent = finalAgencyName;
+        document.getElementById('ack-joining').textContent = joining;
+
+        showPage('page-4');
+      }, 500);
+    }
+  }, 40);
 }
