@@ -240,6 +240,11 @@ function executeFinalSubmission() {
 
   const finalAgencyName = agencySelect === 'OTHER' ? otherAgency : agencySelect;
 
+  // Answer Evaluation Logic
+  const evalResult = (typeof evaluateCandidateResponses === "function") 
+    ? evaluateCandidateResponses(activeQuestions, userAnswers)
+    : { passed: false, score: 0, total: 5 };
+
   const candidatePayload = {
     candidateName: name,
     email: email,
@@ -274,7 +279,7 @@ function executeFinalSubmission() {
     { at: 40, text: 'RUNNING SECURITY & PROCTORING INTEGRITY CHECKS...' },
     { at: 70, text: 'AUTHENTICATING VENDOR AGENCY CREDENTIALS...' },
     { at: 90, text: 'TRANSMITTING REQ-PO47 RESULTS TO DHL TALENT VAULT...' },
-    { at: 100, text: 'SUBMISSION VERIFIED & SECURED!' }
+    { at: 100, text: 'EVALUATION COMPLETE!' }
   ];
 
   const interval = setInterval(() => {
@@ -285,7 +290,9 @@ function executeFinalSubmission() {
     const offset = circumference - (progress / 100) * circumference;
     if (stroke) {
       stroke.style.strokeDashoffset = offset;
-      if (progress > 80) stroke.style.stroke = '#00FF66'; // Green on near complete
+      if (progress > 80) {
+        stroke.style.stroke = evalResult.passed ? '#00FF66' : '#D40511';
+      }
     }
 
     // Dynamic Status Update
@@ -299,10 +306,36 @@ function executeFinalSubmission() {
       setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
 
+        // Page 4 UI Text updates depending on evaluation
+        const ackTitle = document.querySelector('#page-4 h2, #page-4 h3');
+        const ackStatus = document.getElementById('ack-status') || document.querySelector('#page-4 .status-text');
+
+        if (evalResult.passed) {
+          if (ackTitle) {
+            ackTitle.textContent = "ASSESSMENT SUCCESSFULLY SUBMITTED!";
+            ackTitle.style.color = "#00FF66";
+          }
+          if (ackStatus) {
+            ackStatus.textContent = "Logged & Verified";
+            ackStatus.style.color = "#00FF66";
+          }
+        } else {
+          alert("ASSESSMENT UNSUCCESSFUL!\n\nYour technical responses did not meet the required passing criteria.\n\nBefore re-attempting, please contact your consultancy recruitment team.");
+
+          if (ackTitle) {
+            ackTitle.textContent = "ASSESSMENT EVALUATION FAILED!";
+            ackTitle.style.color = "#D40511";
+          }
+          if (ackStatus) {
+            ackStatus.textContent = "REJECTED / UNMET THRESHOLD";
+            ackStatus.style.color = "#D40511";
+          }
+        }
+
         // Populate Page 4 Confirmation Receipt
-        document.getElementById('ack-name').textContent = name;
-        document.getElementById('ack-agency').textContent = finalAgencyName;
-        document.getElementById('ack-joining').textContent = joining;
+        if (document.getElementById('ack-name')) document.getElementById('ack-name').textContent = name;
+        if (document.getElementById('ack-agency')) document.getElementById('ack-agency').textContent = finalAgencyName;
+        if (document.getElementById('ack-joining')) document.getElementById('ack-joining').textContent = joining;
         
         showPage('page-4');
       }, 500);
