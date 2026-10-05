@@ -25,7 +25,7 @@ if (typeof firebase !== 'undefined') {
 let userClientIP = '';
 
 // Helper function to render blocked screen
-function renderBlockedScreen() {
+function renderBlockedScreen(reasonMessage) {
   document.body.innerHTML = `
     <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
       <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
@@ -35,7 +35,7 @@ function renderBlockedScreen() {
         </p>
         <hr style="border-color: #333; margin: 20px 0;" />
         <p style="font-size: 13px; color: #AAA;">
-          You have completed all allowed attempts for the REQ-PO47 assessment gateway.
+          ${reasonMessage || 'You have completed all allowed attempts for the REQ-PO47 assessment gateway.'}
         </p>
         <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
           Please contact your consultancy recruitment team.
@@ -189,8 +189,8 @@ async function startAssessmentProcess(e) {
   }
 
   const name = document.getElementById('cand-name') ? document.getElementById('cand-name').value.trim() : '';
-  const email = document.getElementById('cand-email') ? document.getElementById('cand-email').value.trim() : '';
-  const phone = document.getElementById('cand-phone') ? document.getElementById('cand-phone').value.trim() : '';
+  const email = document.getElementById('cand-email') ? document.getElementById('cand-email').value.trim().toLowerCase() : '';
+  const phone = document.getElementById('cand-phone') ? document.getElementById('cand-phone').value.trim().replace(/\D/g, '') : '';
   const linkedin = document.getElementById('cand-linkedin') ? document.getElementById('cand-linkedin').value.trim() : '';
 
   const checkPolicy = document.getElementById('check-policy') ? document.getElementById('check-policy').checked : false;
@@ -207,6 +207,49 @@ async function startAssessmentProcess(e) {
     alert("You must acknowledge all mandatory compliance, policy, and candidate instruction items to proceed.");
     return;
   }
+
+  // --- ADDED SECURITY: Candidate Tracking & Duplicate Attempt Verification ---
+  if (db) {
+    try {
+      const candidatesRef = db.collection('registered_candidates');
+      
+      const emailQuery = await candidatesRef.where('email', '==', email).get();
+      const phoneQuery = await candidatesRef.where('phone', '==', phone).get();
+
+      let existingCandidate = null;
+      if (!emailQuery.empty) {
+        existingCandidate = emailQuery.docs[0].data();
+      } else if (!phoneQuery.empty) {
+        existingCandidate = phoneQuery.docs[0].data();
+      }
+
+      if (existingCandidate) {
+        let existingAttempts = existingCandidate.attemptsCount || 1;
+        if (existingAttempts >= 2) {
+          alert("ACCESS BLOCKED: Matching Email or Phone record has already completed maximum allowed attempts (2/2).");
+          localStorage.setItem('dhl_attempts', '3');
+          renderBlockedScreen("Candidate profile matching Email/Phone has exceeded maximum allowed attempts (2/2).");
+          return;
+        } else {
+          attempts = existingAttempts + 1;
+          localStorage.setItem('dhl_attempts', attempts.toString());
+        }
+      } else {
+        // Save Signup Profile Data
+        await candidatesRef.doc(email).set({
+          fullName: name,
+          email: email,
+          phone: phone,
+          linkedin: linkedin,
+          registeredAt: new Date().toISOString(),
+          attemptsCount: 1
+        }, { merge: true });
+      }
+    } catch (err) {
+      console.error("Identity Verification Warning:", err);
+    }
+  }
+  // --------------------------------------------------------------------------
 
   if (document.getElementById('final-cand-name')) document.getElementById('final-cand-name').value = name;
   if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
@@ -376,8 +419,8 @@ async function executeFinalSubmission(e) {
   const declChecked = document.getElementById('check-final-decl') ? document.getElementById('check-final-decl').checked : false;
 
   const name = nameElem ? nameElem.value.trim() : '';
-  const phone = phoneElem ? phoneElem.value.trim() : '';
-  const email = emailElem ? emailElem.value.trim() : '';
+  const phone = phoneElem ? phoneElem.value.trim().replace(/\D/g, '') : '';
+  const email = emailElem ? emailElem.value.trim().toLowerCase() : '';
   const agencySelect = agencyElem ? agencyElem.value : '';
   const otherAgency = otherAgencyElem ? otherAgencyElem.value.trim() : '';
   const joining = joiningElem ? joiningElem.value : '';
@@ -407,18 +450,30 @@ async function executeFinalSubmission(e) {
   let currentAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
   // Firestore Sync Background Execution
-  if (db && userClientIP) {
+  if (db) {
     try {
-      const docRef = db.collection('assessment_attempts').doc(userClientIP);
-      const docSnap = await docRef.get();
-      let prevCount = docSnap.exists ? (docSnap.data().attempts || 0) : 0;
-      await docRef.set({
-        ip: userClientIP,
-        attempts: prevCount + 1,
+      const candidatesRef = db.collection('registered_candidates').doc(email);
+      await candidatesRef.set({
+        fullName: name,
+        email: email,
+        phone: phone,
+        attemptsCount: currentAttempts,
         lastSubmittedAt: new Date().toISOString(),
-        candidateName: name,
-        email: email
+        clientIP: userClientIP
       }, { merge: true });
+
+      if (userClientIP) {
+        const docRef = db.collection('assessment_attempts').doc(userClientIP);
+        const docSnap = await docRef.get();
+        let prevCount = docSnap.exists ? (docSnap.data().attempts || 0) : 0;
+        await docRef.set({
+          ip: userClientIP,
+          attempts: prevCount + 1,
+          lastSubmittedAt: new Date().toISOString(),
+          candidateName: name,
+          email: email
+        }, { merge: true });
+      }
     } catch (err) {
       console.error("Firestore Record Error:", err);
     }
