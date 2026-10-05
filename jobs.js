@@ -1,4 +1,4 @@
-// DHL Careers & Requisitions Module - Luxury Enterprise Edition
+// DHL Careers & Requisitions Module - Synchronized Vendor List Edition
 
 const dhlJobsList = [
   { id: "2504841", title: "Product Engineer", status: "On Hold", client: "Baxter / Healthcare Systems", exp: "6+ Years", skills: "Product Lifecycle Management, Medical Devices, Embedded Hardware/Software, ISO 13485" },
@@ -53,10 +53,10 @@ function injectJobsModalHTML() {
     <div style="max-width:1150px; margin:auto; background:#111; border:1px solid #D40511; border-radius:8px; padding:30px; color:#FFF; font-family:'Segoe UI', Arial, sans-serif; box-shadow:0 15px 40px rgba(212,5,17,0.4);">
       
       <!-- Modal Top Header -->
-      <div style="display:flex; justify-space-between; align-items:center; border-bottom:2px solid #D40511; padding-bottom:18px; margin-bottom:22px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #D40511; padding-bottom:18px; margin-bottom:22px;">
         <div>
           <h2 style="color:#FFCC00; margin:0; font-size:24px; font-weight:900; letter-spacing:1px; text-transform:uppercase;">DHL GLOBAL CAREERS & EXECUTIVE REQUISITIONS</h2>
-          <p style="color:#AAA; margin:6px 0 0 0; font-size:13px;">Managed Talent Network | Exclusive Authorized Vendor Submissions</p>
+          <p style="color:#AAA; margin:6px 0 0 0; font-size:13px;">Managed Talent Network | Authorized Consulting Vendor Submissions</p>
         </div>
         <button onclick="closeJobsModal()" style="background:#D40511; color:#FFF; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; border-radius:4px; font-size:13px;">✕ CLOSE PORTAL</button>
       </div>
@@ -79,7 +79,7 @@ function injectJobsModalHTML() {
         <!-- Detailed JD Text Content -->
         <div style="margin:20px 0; padding-top:10px; color:#DDD; font-size:14px; line-height:1.7;" id="jd-body"></div>
 
-        <!-- Luxury Application Form -->
+        <!-- Luxury Dynamic Application Form -->
         <form id="job-apply-form" onsubmit="event.preventDefault(); submitJobApplication();" style="margin-top:25px; border-top:2px solid #D40511; padding-top:22px;">
           <h4 style="color:#FFCC00; margin:0 0 18px 0; font-size:17px; letter-spacing:0.5px; text-transform:uppercase;">APPLY & SUBMIT CANDIDATE DOSSIER</h4>
           
@@ -104,13 +104,30 @@ function injectJobsModalHTML() {
               <input type="text" id="app-visa" placeholder="US Citizen / Green Card / H1B / CPT / OPT" required style="width:100%; background:#222; border:1px solid #444; color:#FFF; padding:11px; border-radius:4px; box-sizing:border-box;">
             </div>
 
-            <!-- Submitting Agency & W2 Employer Selection -->
-            <div style="grid-column:span 2; display:grid; grid-template-columns:1fr 1fr; gap:16px; background:#111; padding:15px; border:1px solid #333; border-radius:5px;">
+            <!-- Submitting Agency & W2 Selection Container -->
+            <div style="grid-column:span 2; display:grid; grid-template-columns:1fr 1fr; gap:16px; background:#111; padding:16px; border:1px solid #333; border-radius:5px;">
+              
+              <!-- Submitting Consulting / Vendor Agency Dropdown (Matched Exactly with Assessment) -->
               <div>
-                <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px; font-weight:bold;">Submitting Agency</label>
-                <input type="text" value="Truspary Consulting" readonly style="width:100%; background:#1a1a1a; border:1px solid #444; color:#00FF66; font-weight:bold; padding:11px; border-radius:4px; box-sizing:border-box;">
+                <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px; font-weight:bold;">Submitting Consulting / Vendor Agency *</label>
+                <select id="app-agency-select" onchange="handleAgencyChange(this.value)" required style="width:100%; background:#222; border:1px solid #FFCC00; color:#FFF; padding:11px; border-radius:4px; box-sizing:border-box;">
+                  <option value="">-- Select Submitting Agency --</option>
+                  <option value="Infteq">Infteq</option>
+                  <option value="AUum Solutions">AUum Solutions</option>
+                  <option value="Kommforce Solutions">Kommforce Solutions</option>
+                  <option value="Advithri">Advithri</option>
+                  <option value="Ask Consulting">Ask Consulting</option>
+                  <option value="Truspary Consulting">Truspary Consulting</option>
+                  <option value="ABQ Tech">ABQ Tech</option>
+                  <option value="Cloud Computer Tech">Cloud Computer Tech</option>
+                  <option value="NCS Wizards">NCS Wizards</option>
+                  <option value="Canopy One">Canopy One</option>
+                  <option value="Merge IT">Merge IT</option>
+                  <option value="OTHER">Other / Not listed above</option>
+                </select>
               </div>
 
+              <!-- Employer W2 Dropdown -->
               <div>
                 <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px; font-weight:bold;">Employer W2 Entity *</label>
                 <select id="app-w2-select" onchange="toggleCustomW2Input(this.value)" required style="width:100%; background:#222; border:1px solid #444; color:#FFF; padding:11px; border-radius:4px; box-sizing:border-box;">
@@ -123,11 +140,18 @@ function injectJobsModalHTML() {
                 </select>
               </div>
 
-              <!-- Custom W2 Input Field (Shown if 'OTHER' selected) -->
-              <div id="custom-w2-container" style="display:none; grid-column:span 2; margin-top:5px;">
-                <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px;">Specify Custom W2 Employer Name *</label>
+              <!-- Custom Agency Input (Mandatory if 'OTHER' selected) -->
+              <div id="custom-agency-container" style="display:none; grid-column:span 2; margin-top:4px;">
+                <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px; font-weight:bold;">Specify Custom Consulting Agency Name *</label>
+                <input type="text" id="app-custom-agency" oninput="updateSubmitButtonText()" placeholder="Type exact Submitting Agency Name..." style="width:100%; background:#222; border:1px solid #FFCC00; color:#FFF; padding:11px; border-radius:4px; box-sizing:border-box;">
+              </div>
+
+              <!-- Custom W2 Input (Mandatory if 'OTHER' selected) -->
+              <div id="custom-w2-container" style="display:none; grid-column:span 2; margin-top:4px;">
+                <label style="font-size:12px; color:#FFCC00; display:block; margin-bottom:5px; font-weight:bold;">Specify Custom W2 Employer Name *</label>
                 <input type="text" id="app-custom-w2" placeholder="Type candidate's exact W2 employer name..." style="width:100%; background:#222; border:1px solid #FFCC00; color:#FFF; padding:11px; border-radius:4px; box-sizing:border-box;">
               </div>
+
             </div>
 
             <!-- Resume File Upload -->
@@ -137,8 +161,9 @@ function injectJobsModalHTML() {
             </div>
           </div>
 
-          <button type="submit" style="margin-top:22px; width:100%; background:#D40511; color:#FFF; padding:14px; border:none; font-weight:800; font-size:15px; cursor:pointer; border-radius:4px; letter-spacing:1px; text-transform:uppercase;">
-            SUBMIT DOSSIER VIA TRUSPARY CONSULTING
+          <!-- Dynamic Button Text -->
+          <button type="submit" id="submit-dossier-btn" style="margin-top:22px; width:100%; background:#D40511; color:#FFF; padding:14px; border:none; font-weight:800; font-size:15px; cursor:pointer; border-radius:4px; letter-spacing:1px; text-transform:uppercase;">
+            SUBMIT DOSSIER VIA CONSULTING AGENCY
           </button>
         </form>
       </div>
@@ -146,6 +171,19 @@ function injectJobsModalHTML() {
     </div>
   `;
   document.body.appendChild(modalDiv);
+}
+
+function handleAgencyChange(val) {
+  const container = document.getElementById('custom-agency-container');
+  const customInput = document.getElementById('app-custom-agency');
+  if (val === 'OTHER') {
+    container.style.display = 'block';
+    customInput.required = true;
+  } else {
+    container.style.display = 'none';
+    customInput.required = false;
+  }
+  updateSubmitButtonText();
 }
 
 function toggleCustomW2Input(val) {
@@ -157,6 +195,23 @@ function toggleCustomW2Input(val) {
   } else {
     container.style.display = 'none';
     customInput.required = false;
+  }
+}
+
+function updateSubmitButtonText() {
+  const agencySelect = document.getElementById('app-agency-select').value;
+  const customAgency = document.getElementById('app-custom-agency').value.trim();
+  const btn = document.getElementById('submit-dossier-btn');
+
+  let chosenAgency = agencySelect;
+  if (agencySelect === 'OTHER') {
+    chosenAgency = customAgency !== '' ? customAgency : 'CUSTOM AGENCY';
+  } else if (!agencySelect) {
+    chosenAgency = 'CONSULTING AGENCY';
+  }
+
+  if (btn) {
+    btn.textContent = `SUBMIT DOSSIER VIA ${chosenAgency.toUpperCase()}`;
   }
 }
 
@@ -214,12 +269,15 @@ function viewJobDetail(reqId) {
 
 function submitJobApplication() {
   const name = document.getElementById('app-fullname').value;
+  const selectAgency = document.getElementById('app-agency-select').value;
+  const customAgency = document.getElementById('app-custom-agency').value;
   const selectW2 = document.getElementById('app-w2-select').value;
   const customW2 = document.getElementById('app-custom-w2').value;
 
+  const finalAgency = (selectAgency === 'OTHER' && customAgency.trim() !== '') ? customAgency.trim() : selectAgency;
   const finalW2Employer = (selectW2 === 'OTHER' && customW2.trim() !== '') ? customW2.trim() : selectW2;
 
-  alert(`DOSSIER SUBMITTED SUCCESSFULLY!\n\nCandidate: ${name}\nSubmitting Agency: Truspary Consulting\nEmployer W2 Entity: ${finalW2Employer}\n\nYour application, visa credentials, and encrypted resume have been routed directly to DHL Talent Acquisition.`);
+  alert(`DOSSIER SUBMITTED SUCCESSFULLY!\n\nCandidate: ${name}\nSubmitting Agency: ${finalAgency}\nEmployer W2 Entity: ${finalW2Employer}\n\nYour application, visa credentials, and encrypted resume have been routed directly to DHL Talent Acquisition.`);
   
   closeJobsModal();
 }
