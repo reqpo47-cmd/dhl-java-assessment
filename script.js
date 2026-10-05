@@ -9,7 +9,7 @@ const firebaseConfig = {
   measurementId: "G-Y512RRTRKX"
 };
 
-// Safe Firebase Initialization (Crash Protection)
+// Safe Firebase Initialization
 let db = null;
 if (typeof firebase !== 'undefined') {
   try {
@@ -20,13 +20,32 @@ if (typeof firebase !== 'undefined') {
   } catch (e) {
     console.warn("Firebase Init Warning:", e);
   }
-} else {
-  console.warn("Firebase SDK not loaded. Using fallback mode.");
 }
 
 let userClientIP = '';
 
-// Browser Restriction Check (Only Google Chrome Allowed)
+// Helper function to render blocked screen
+function renderBlockedScreen() {
+  document.body.innerHTML = `
+    <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
+      <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
+        <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
+        <p style="color: #FFCC00; font-size: 14px; line-height: 1.6; font-weight: bold;">
+          MAXIMUM ATTEMPTS EXCEEDED (2/2)
+        </p>
+        <hr style="border-color: #333; margin: 20px 0;" />
+        <p style="font-size: 13px; color: #AAA;">
+          You have completed all allowed attempts for the REQ-PO47 assessment gateway.
+        </p>
+        <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
+          Please contact your consultancy recruitment team.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Browser Restriction Check
 (function enforceChromeOnly() {
   const ua = navigator.userAgent;
   const isFirefox = ua.includes("Firefox");
@@ -58,78 +77,51 @@ let userClientIP = '';
   }
 })();
 
-// Real IP Fetching & Firebase Firestore Attempt Lockout Check
+// Real IP Fetching & Attempt Tracker Initializer
 (async function initIPAndFirebaseAttemptTracker() {
+  let localAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+
+  if (localAttempts > 2) {
+    window.addEventListener('DOMContentLoaded', () => {
+      renderBlockedScreen();
+    });
+    return;
+  }
+
+  // Update Badge initially via local count
+  window.addEventListener('DOMContentLoaded', () => {
+    const badge = document.getElementById('attempt-badge');
+    if (badge) badge.textContent = `ATTEMPT: ${localAttempts}/2`;
+  });
+
+  // Try Syncing with Firebase
   try {
     const res = await fetch('https://api.ipify.org?format=json');
     const data = await res.json();
     userClientIP = data.ip ? data.ip.replace(/\./g, '_') : '';
-  } catch (err) {
-    console.error("IP Fetch Error:", err);
-  }
 
-  // Fallback check via localStorage
-  let localAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
-
-  if (db && userClientIP) {
-    try {
+    if (db && userClientIP) {
       const docRef = db.collection('assessment_attempts').doc(userClientIP);
       const docSnap = await docRef.get();
 
       if (docSnap.exists) {
         const firestoreCount = docSnap.data().attempts || 0;
-        if (firestoreCount >= 2) {
-          showAccessBlockedScreen();
+        const actualAttempts = Math.max(localAttempts, firestoreCount + 1);
+        
+        if (actualAttempts > 2) {
+          renderBlockedScreen();
           return;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-          const badge = document.getElementById('attempt-badge');
-          if (badge) badge.textContent = `ATTEMPT: ${firestoreCount + 1}/2`;
-        });
-        return;
+        localStorage.setItem('dhl_attempts', actualAttempts.toString());
+        const badge = document.getElementById('attempt-badge');
+        if (badge) badge.textContent = `ATTEMPT: ${actualAttempts}/2`;
       }
-    } catch (e) {
-      console.error("Firestore Lockout Verification Error:", e);
     }
+  } catch (err) {
+    console.error("IP/Firestore Sync Warning:", err);
   }
-
-  if (localAttempts > 2) {
-    showAccessBlockedScreen();
-    return;
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    const badge = document.getElementById('attempt-badge');
-    if (badge) {
-      badge.textContent = `ATTEMPT: ${localAttempts}/2`;
-    }
-  });
-
-  window.currentStorageKey = 'dhl_attempts';
 })();
-
-function showAccessBlockedScreen() {
-  window.addEventListener('DOMContentLoaded', () => {
-    document.body.innerHTML = `
-      <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
-        <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
-          <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
-          <p style="color: #FFCC00; font-size: 14px; line-height: 1.6; font-weight: bold;">
-            MAXIMUM ATTEMPTS EXCEEDED (2/2)
-          </p>
-          <hr style="border-color: #333; margin: 20px 0;" />
-          <p style="font-size: 13px; color: #AAA;">
-            You have completed all allowed attempts for the REQ-PO47 assessment gateway.
-          </p>
-          <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
-            Please contact your consultancy recruitment team.
-          </div>
-        </div>
-      </div>
-    `;
-  });
-}
 
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
@@ -160,12 +152,12 @@ window.addEventListener('DOMContentLoaded', () => {
           splash.style.opacity = '0';
           splash.style.visibility = 'hidden';
         }
-      }, 400);
+      }, 300);
     }
-  }, 450);
+  }, 350);
 });
 
-let timeRemaining = 45 * 60; // 45 Minutes
+let timeRemaining = 45 * 60;
 let timerInterval = null;
 let currentQuestionIndex = 0;
 let activeQuestions = [];
@@ -185,24 +177,14 @@ function showPage(pageId) {
   }
 }
 
-async function startAssessmentProcess() {
-  if (db && userClientIP) {
-    try {
-      const docRef = db.collection('assessment_attempts').doc(userClientIP);
-      const docSnap = await docRef.get();
-      if (docSnap.exists && docSnap.data().attempts >= 2) {
-        alert("Maximum attempts limit reached (2/2). Access blocked.");
-        return;
-      }
-    } catch (e) {
-      console.error("Firebase Pre-start Check Error:", e);
-    }
-  }
+async function startAssessmentProcess(e) {
+  if (e && e.preventDefault) e.preventDefault();
 
   let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
   if (attempts > 2) {
     alert("Maximum attempts limit reached (2/2). Access blocked.");
+    renderBlockedScreen();
     return;
   }
 
@@ -226,7 +208,6 @@ async function startAssessmentProcess() {
     return;
   }
 
-  // Pre-fill Page 3 fields with Page 1 inputs
   if (document.getElementById('final-cand-name')) document.getElementById('final-cand-name').value = name;
   if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
   if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
@@ -236,7 +217,6 @@ async function startAssessmentProcess() {
     badge.textContent = `ATTEMPT: ${attempts}/2`;
   }
 
-  // Load Questions set dynamically
   if (typeof getQuestionsForCurrentAttempt === "function") {
     activeQuestions = getQuestionsForCurrentAttempt();
   } else if (typeof testQuestions !== "undefined") {
@@ -258,16 +238,19 @@ function loadQuestion(index) {
   if (!activeQuestions || activeQuestions.length === 0) return;
 
   const q = activeQuestions[index];
-  document.getElementById('question-progress-label').textContent = `QUESTION ${index + 1} OF ${activeQuestions.length}`;
-  document.getElementById('q-title').textContent = q.title;
-  document.getElementById('q-desc').textContent = q.description;
+  const progressLabel = document.getElementById('question-progress-label');
+  const titleElem = document.getElementById('q-title');
+  const descElem = document.getElementById('q-desc');
+
+  if (progressLabel) progressLabel.textContent = `QUESTION ${index + 1} OF ${activeQuestions.length}`;
+  if (titleElem) titleElem.textContent = q.title;
+  if (descElem) descElem.textContent = q.description;
 
   const codeArea = document.getElementById('current-code-answer');
   if (codeArea) {
     codeArea.value = userAnswers[q.id] || '';
   }
 
-  // Button Visibility Controls
   const prevBtn = document.getElementById('btn-prev');
   const nextBtn = document.getElementById('btn-next');
   const submitBtn = document.getElementById('btn-submit');
@@ -295,7 +278,6 @@ function saveCurrentAnswer() {
 function navigateQuestion(direction) {
   saveCurrentAnswer();
 
-  // Next question jaane se pehle check karein ki current answer blank na ho
   if (direction > 0) {
     const q = activeQuestions[currentQuestionIndex];
     const currentAns = userAnswers[q.id] ? userAnswers[q.id].trim() : '';
@@ -332,7 +314,6 @@ function startTimer() {
   }, 1000);
 }
 
-// Security Enforcement: Anti Tab-Switching
 function activateTabProtection() {
   document.addEventListener('visibilitychange', () => {
     const page2 = document.getElementById('page-2');
@@ -347,24 +328,24 @@ function activateTabProtection() {
 function handleAgencyChange(selectElem) {
   const otherGroup = document.getElementById('other-agency-group');
   const otherInput = document.getElementById('other-agency-input');
-  if (selectElem.value === 'OTHER') {
-    otherGroup.style.display = 'block';
-    otherInput.required = true;
-  } else {
-    otherGroup.style.display = 'none';
-    otherInput.required = false;
-    otherInput.value = '';
+  if (otherGroup && otherInput) {
+    if (selectElem.value === 'OTHER') {
+      otherGroup.style.display = 'block';
+      otherInput.required = true;
+    } else {
+      otherGroup.style.display = 'none';
+      otherInput.required = false;
+      otherInput.value = '';
+    }
   }
 }
 
 function goToAgencyVerification(reason) {
   saveCurrentAnswer();
 
-  // Time ya Security violation par direct submit karne dein
   const isViolation = reason && (reason.includes('Security') || reason.includes('Time'));
 
   if (!isViolation) {
-    // Check karein ki saare questions answered hain ya nahi
     const unansweredQuestions = [];
     activeQuestions.forEach((q, idx) => {
       if (!userAnswers[q.id] || userAnswers[q.id].trim() === '') {
@@ -382,16 +363,25 @@ function goToAgencyVerification(reason) {
   showPage('page-3');
 }
 
-async function executeFinalSubmission() {
-  const name = document.getElementById('final-cand-name').value.trim();
-  const phone = document.getElementById('final-cand-phone').value.trim();
-  const email = document.getElementById('final-cand-email').value.trim();
-  
-  const agencySelect = document.getElementById('agency-select').value;
-  const otherAgency = document.getElementById('other-agency-input').value.trim();
-  const joining = document.getElementById('joining-timeline').value;
-  const workAuth = document.getElementById('work-authorization').value;
-  const declChecked = document.getElementById('check-final-decl').checked;
+async function executeFinalSubmission(e) {
+  if (e && e.preventDefault) e.preventDefault();
+
+  const nameElem = document.getElementById('final-cand-name');
+  const phoneElem = document.getElementById('final-cand-phone');
+  const emailElem = document.getElementById('final-cand-email');
+  const agencyElem = document.getElementById('agency-select');
+  const otherAgencyElem = document.getElementById('other-agency-input');
+  const joiningElem = document.getElementById('joining-timeline');
+  const workAuthElem = document.getElementById('work-authorization');
+  const declChecked = document.getElementById('check-final-decl') ? document.getElementById('check-final-decl').checked : false;
+
+  const name = nameElem ? nameElem.value.trim() : '';
+  const phone = phoneElem ? phoneElem.value.trim() : '';
+  const email = emailElem ? emailElem.value.trim() : '';
+  const agencySelect = agencyElem ? agencyElem.value : '';
+  const otherAgency = otherAgencyElem ? otherAgencyElem.value.trim() : '';
+  const joining = joiningElem ? joiningElem.value : '';
+  const workAuth = workAuthElem ? workAuthElem.value : '';
 
   if (!name || !phone || !email || !agencySelect || !joining || !workAuth) {
     alert("Please complete all candidate and consulting agency verification fields.");
@@ -410,32 +400,13 @@ async function executeFinalSubmission() {
 
   const finalAgencyName = agencySelect === 'OTHER' ? otherAgency : agencySelect;
 
-  // Answer Evaluation Logic
   const evalResult = (typeof evaluateCandidateResponses === "function") 
     ? evaluateCandidateResponses(activeQuestions, userAnswers)
     : { passed: false, score: 0, total: 5 };
 
   let currentAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
-  const candidatePayload = {
-    candidateName: name,
-    email: email,
-    phone: phone,
-    consultingAgency: finalAgencyName,
-    earliestJoining: joining,
-    workAuthorization: workAuth,
-    attemptNumber: currentAttempts.toString(),
-    submittedAt: new Date().toISOString(),
-    responses: activeQuestions.map(q => ({
-      questionId: q.id,
-      title: q.title,
-      codeAnswer: userAnswers[q.id] || 'N/A'
-    }))
-  };
-
-  console.log("DHL Enterprise Final Payload Transmitted:", candidatePayload);
-
-  // Firestore Database Attempt Entry Record
+  // Firestore Sync Background Execution
   if (db && userClientIP) {
     try {
       const docRef = db.collection('assessment_attempts').doc(userClientIP);
@@ -448,12 +419,11 @@ async function executeFinalSubmission() {
         candidateName: name,
         email: email
       }, { merge: true });
-    } catch (e) {
-      console.error("Firebase Database Submission Record Error:", e);
+    } catch (err) {
+      console.error("Firestore Record Error:", err);
     }
   }
 
-  // Trigger Animated Circular Processing Overlay
   const overlay = document.getElementById('processing-overlay');
   const stroke = document.getElementById('circle-stroke');
   const percentText = document.getElementById('loader-percentage');
@@ -461,7 +431,7 @@ async function executeFinalSubmission() {
 
   if (overlay) overlay.style.display = 'flex';
 
-  const circumference = 408; // 2 * Math.PI * 65
+  const circumference = 408;
   let progress = 0;
 
   const statusMessages = [
@@ -476,7 +446,6 @@ async function executeFinalSubmission() {
     progress += 2;
     if (percentText) percentText.textContent = `${progress}%`;
     
-    // Update SVG stroke circle dash offset
     const offset = circumference - (progress / 100) * circumference;
     if (stroke) {
       stroke.style.strokeDashoffset = offset;
@@ -485,7 +454,6 @@ async function executeFinalSubmission() {
       }
     }
 
-    // Dynamic Status Update
     const currentMsg = statusMessages.find(m => m.at === progress);
     if (currentMsg && statusText) {
       statusText.textContent = currentMsg.text;
@@ -496,10 +464,9 @@ async function executeFinalSubmission() {
       setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
 
-        // Increment attempt in localStorage after submission
+        // Increment attempt count on submission
         localStorage.setItem('dhl_attempts', (currentAttempts + 1).toString());
 
-        // Page 4 UI Text updates depending on evaluation
         const ackTitle = document.querySelector('#page-4 h2, #page-4 h3');
         const ackStatus = document.getElementById('ack-status') || document.querySelector('#page-4 .status-text');
 
@@ -513,8 +480,6 @@ async function executeFinalSubmission() {
             ackStatus.style.color = "#00FF66";
           }
         } else {
-          alert("ASSESSMENT UNSUCCESSFUL!\n\nYour technical responses did not meet the required passing criteria.\n\nBefore re-attempting, please contact your consultancy recruitment team.");
-
           if (ackTitle) {
             ackTitle.textContent = "ASSESSMENT EVALUATION FAILED!";
             ackTitle.style.color = "#D40511";
@@ -525,13 +490,12 @@ async function executeFinalSubmission() {
           }
         }
 
-        // Populate Page 4 Confirmation Receipt
         if (document.getElementById('ack-name')) document.getElementById('ack-name').textContent = name;
         if (document.getElementById('ack-agency')) document.getElementById('ack-agency').textContent = finalAgencyName;
         if (document.getElementById('ack-joining')) document.getElementById('ack-joining').textContent = joining;
         
         showPage('page-4');
-      }, 500);
+      }, 400);
     }
-  }, 40);
+  }, 35);
 }
