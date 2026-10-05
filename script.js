@@ -35,14 +35,43 @@
   }
 })();
 
-// Basic Attempt Tracker (Without IP Lockout)
+// Basic Attempt Tracker with X/2 Format
 (function initSimpleAttemptTracker() {
   let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
-  // Update Badge in Header
+  // Lockout check if attempts exceed 2
+  if (attemptsCount > 2) {
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        splash.style.opacity = '1';
+        splash.style.visibility = 'visible';
+        splash.style.background = '#000000';
+        splash.innerHTML = `
+          <div style="text-align: center; color: #FFFFFF; font-family: monospace; padding: 40px; max-width: 600px; margin: auto; border: 2px solid #D40511; background: #111; margin-top: 10%;">
+            <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
+            <p style="color: #FFCC00; font-size: 14px; line-height: 1.6;">
+              MAXIMUM ATTEMPTS EXCEEDED (2/2)
+            </p>
+            <hr style="border-color: #333; margin: 20px 0;" />
+            <p style="font-size: 13px; color: #AAA;">
+              You have completed all allowed attempts for the REQ-PO47 assessment gateway.
+            </p>
+            <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
+              Please contact your consultancy recruitment team.
+            </div>
+          </div>
+        `;
+      }
+    });
+    return;
+  }
+
+  // Update Badge in Header (Format: ATTEMPT: 1/2)
   const badge = document.getElementById('attempt-badge');
   if (badge) {
-    badge.textContent = `ATTEMPT: ${attemptsCount}`;
+    badge.textContent = `ATTEMPT: ${attemptsCount}/2`;
   }
 
   window.currentStorageKey = 'dhl_attempts';
@@ -100,6 +129,13 @@ function showPage(pageId) {
 }
 
 function startAssessmentProcess() {
+  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+
+  if (attempts > 2) {
+    alert("Maximum attempts limit reached (2/2). Access blocked.");
+    return;
+  }
+
   const name = document.getElementById('cand-name') ? document.getElementById('cand-name').value.trim() : '';
   const email = document.getElementById('cand-email') ? document.getElementById('cand-email').value.trim() : '';
   const phone = document.getElementById('cand-phone') ? document.getElementById('cand-phone').value.trim() : '';
@@ -126,12 +162,10 @@ function startAssessmentProcess() {
   if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
 
   // Increment attempts counter when candidate starts test
-  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10) + 1;
-  localStorage.setItem('dhl_attempts', attempts.toString());
-
+  attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
   const badge = document.getElementById('attempt-badge');
   if (badge) {
-    badge.textContent = `ATTEMPT: ${attempts}`;
+    badge.textContent = `ATTEMPT: ${attempts}/2`;
   }
 
   // Load Questions set dynamically
@@ -313,6 +347,8 @@ function executeFinalSubmission() {
     ? evaluateCandidateResponses(activeQuestions, userAnswers)
     : { passed: false, score: 0, total: 5 };
 
+  let currentAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+
   const candidatePayload = {
     candidateName: name,
     email: email,
@@ -320,7 +356,7 @@ function executeFinalSubmission() {
     consultingAgency: finalAgencyName,
     earliestJoining: joining,
     workAuthorization: workAuth,
-    attemptNumber: localStorage.getItem('dhl_attempts') || '1',
+    attemptNumber: currentAttempts.toString(),
     submittedAt: new Date().toISOString(),
     responses: activeQuestions.map(q => ({
       questionId: q.id,
@@ -373,6 +409,9 @@ function executeFinalSubmission() {
       clearInterval(interval);
       setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
+
+        // Increment attempt after finishing current submission so next visit goes to attempt 2 or gets blocked
+        localStorage.setItem('dhl_attempts', (currentAttempts + 1).toString());
 
         // Page 4 UI Text updates depending on evaluation
         const ackTitle = document.querySelector('#page-4 h2, #page-4 h3');
