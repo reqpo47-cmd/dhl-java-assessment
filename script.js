@@ -9,14 +9,9 @@
 
   if (!isChrome || isFirefox || isEdge || isOpera || isSafari) {
     window.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-      const splash = document.getElementById('splash-screen');
-      if (splash) {
-        splash.style.opacity = '1';
-        splash.style.visibility = 'visible';
-        splash.style.background = '#000000';
-        splash.innerHTML = `
-          <div style="text-align: center; color: #FFFFFF; font-family: monospace; padding: 40px; max-width: 600px; margin: auto; border: 2px solid #D40511; background: #111; margin-top: 10%;">
+      document.body.innerHTML = `
+        <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
+          <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
             <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">UNSUPPORTED BROWSER DETECTED</h1>
             <p style="color: #FFCC00; font-size: 14px; line-height: 1.6;">
               ACCESS RESTRICTED: Mozilla Firefox, Microsoft Edge, Safari, and Opera are strictly prohibited for REQ-PO47 assessment.
@@ -29,29 +24,24 @@
               For any technical assistance, please contact your consultancy recruitment team.
             </div>
           </div>
-        `;
-      }
+        </div>
+      `;
     });
   }
 })();
 
-// Basic Attempt Tracker with X/2 Format
+// Basic Attempt Tracker with 2 Max Attempts Limit Lockout Fix
 (function initSimpleAttemptTracker() {
   let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
   // Lockout check if attempts exceed 2
   if (attemptsCount > 2) {
     window.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-      const splash = document.getElementById('splash-screen');
-      if (splash) {
-        splash.style.opacity = '1';
-        splash.style.visibility = 'visible';
-        splash.style.background = '#000000';
-        splash.innerHTML = `
-          <div style="text-align: center; color: #FFFFFF; font-family: monospace; padding: 40px; max-width: 600px; margin: auto; border: 2px solid #D40511; background: #111; margin-top: 10%;">
+      document.body.innerHTML = `
+        <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
+          <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
             <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
-            <p style="color: #FFCC00; font-size: 14px; line-height: 1.6;">
+            <p style="color: #FFCC00; font-size: 14px; line-height: 1.6; font-weight: bold;">
               MAXIMUM ATTEMPTS EXCEEDED (2/2)
             </p>
             <hr style="border-color: #333; margin: 20px 0;" />
@@ -62,23 +52,28 @@
               Please contact your consultancy recruitment team.
             </div>
           </div>
-        `;
-      }
+        </div>
+      `;
     });
     return;
   }
 
   // Update Badge in Header (Format: ATTEMPT: 1/2)
-  const badge = document.getElementById('attempt-badge');
-  if (badge) {
-    badge.textContent = `ATTEMPT: ${attemptsCount}/2`;
-  }
+  window.addEventListener('DOMContentLoaded', () => {
+    const badge = document.getElementById('attempt-badge');
+    if (badge) {
+      badge.textContent = `ATTEMPT: ${attemptsCount}/2`;
+    }
+  });
 
   window.currentStorageKey = 'dhl_attempts';
 })();
 
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
+  let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+  if (attemptsCount > 2) return;
+
   const progressBar = document.getElementById('splash-progress');
   const statusText = document.getElementById('splash-status');
   const splash = document.getElementById('splash-screen');
@@ -161,8 +156,6 @@ function startAssessmentProcess() {
   if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
   if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
 
-  // Increment attempts counter when candidate starts test
-  attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
   const badge = document.getElementById('attempt-badge');
   if (badge) {
     badge.textContent = `ATTEMPT: ${attempts}/2`;
