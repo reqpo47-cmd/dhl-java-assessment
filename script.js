@@ -9,11 +9,20 @@ const firebaseConfig = {
   measurementId: "G-Y512RRTRKX"
 };
 
-// Initialize Firebase & Firestore
-if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+// Safe Firebase Initialization (Crash Protection)
+let db = null;
+if (typeof firebase !== 'undefined') {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.firestore();
+  } catch (e) {
+    console.warn("Firebase Init Warning:", e);
+  }
+} else {
+  console.warn("Firebase SDK not loaded. Using fallback mode.");
 }
-const db = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
 
 let userClientIP = '';
 
