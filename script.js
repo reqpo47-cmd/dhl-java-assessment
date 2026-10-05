@@ -1,3 +1,22 @@
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBM-uBxL1z1STakKY9wYU3LpDb-T-Qs590",
+  authDomain: "dhl-assessment.firebaseapp.com",
+  projectId: "dhl-assessment",
+  storageBucket: "dhl-assessment.firebasestorage.app",
+  messagingSenderId: "980467522269",
+  appId: "1:980467522269:web:bf98f94a792082b7e15934",
+  measurementId: "G-Y512RRTRKX"
+};
+
+// Initialize Firebase & Firestore
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = (typeof firebase !== 'undefined') ? firebase.firestore() : null;
+
+let userClientIP = '';
+
 // Browser Restriction Check (Only Google Chrome Allowed)
 (function enforceChromeOnly() {
   const ua = navigator.userAgent;
@@ -30,44 +49,78 @@
   }
 })();
 
-// Basic Attempt Tracker with 2 Max Attempts Limit Lockout Fix
-(function initSimpleAttemptTracker() {
-  let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+// Real IP Fetching & Firebase Firestore Attempt Lockout Check
+(async function initIPAndFirebaseAttemptTracker() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    userClientIP = data.ip ? data.ip.replace(/\./g, '_') : '';
+  } catch (err) {
+    console.error("IP Fetch Error:", err);
+  }
 
-  // Lockout check if attempts exceed 2
-  if (attemptsCount > 2) {
-    window.addEventListener('DOMContentLoaded', () => {
-      document.body.innerHTML = `
-        <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
-          <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
-            <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
-            <p style="color: #FFCC00; font-size: 14px; line-height: 1.6; font-weight: bold;">
-              MAXIMUM ATTEMPTS EXCEEDED (2/2)
-            </p>
-            <hr style="border-color: #333; margin: 20px 0;" />
-            <p style="font-size: 13px; color: #AAA;">
-              You have completed all allowed attempts for the REQ-PO47 assessment gateway.
-            </p>
-            <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
-              Please contact your consultancy recruitment team.
-            </div>
-          </div>
-        </div>
-      `;
-    });
+  // Fallback check via localStorage
+  let localAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
+
+  if (db && userClientIP) {
+    try {
+      const docRef = db.collection('assessment_attempts').doc(userClientIP);
+      const docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        const firestoreCount = docSnap.data().attempts || 0;
+        if (firestoreCount >= 2) {
+          showAccessBlockedScreen();
+          return;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+          const badge = document.getElementById('attempt-badge');
+          if (badge) badge.textContent = `ATTEMPT: ${firestoreCount + 1}/2`;
+        });
+        return;
+      }
+    } catch (e) {
+      console.error("Firestore Lockout Verification Error:", e);
+    }
+  }
+
+  if (localAttempts > 2) {
+    showAccessBlockedScreen();
     return;
   }
 
-  // Update Badge in Header (Format: ATTEMPT: 1/2)
   window.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('attempt-badge');
     if (badge) {
-      badge.textContent = `ATTEMPT: ${attemptsCount}/2`;
+      badge.textContent = `ATTEMPT: ${localAttempts}/2`;
     }
   });
 
   window.currentStorageKey = 'dhl_attempts';
 })();
+
+function showAccessBlockedScreen() {
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.innerHTML = `
+      <div style="background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: monospace;">
+        <div style="text-align: center; color: #FFFFFF; padding: 40px; max-width: 600px; border: 2px solid #D40511; background: #111;">
+          <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">ACCESS DENIED - LIMIT EXCEEDED</h1>
+          <p style="color: #FFCC00; font-size: 14px; line-height: 1.6; font-weight: bold;">
+            MAXIMUM ATTEMPTS EXCEEDED (2/2)
+          </p>
+          <hr style="border-color: #333; margin: 20px 0;" />
+          <p style="font-size: 13px; color: #AAA;">
+            You have completed all allowed attempts for the REQ-PO47 assessment gateway.
+          </p>
+          <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
+            Please contact your consultancy recruitment team.
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
 
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
@@ -123,7 +176,20 @@ function showPage(pageId) {
   }
 }
 
-function startAssessmentProcess() {
+async function startAssessmentProcess() {
+  if (db && userClientIP) {
+    try {
+      const docRef = db.collection('assessment_attempts').doc(userClientIP);
+      const docSnap = await docRef.get();
+      if (docSnap.exists && docSnap.data().attempts >= 2) {
+        alert("Maximum attempts limit reached (2/2). Access blocked.");
+        return;
+      }
+    } catch (e) {
+      console.error("Firebase Pre-start Check Error:", e);
+    }
+  }
+
   let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
   if (attempts > 2) {
@@ -307,7 +373,7 @@ function goToAgencyVerification(reason) {
   showPage('page-3');
 }
 
-function executeFinalSubmission() {
+async function executeFinalSubmission() {
   const name = document.getElementById('final-cand-name').value.trim();
   const phone = document.getElementById('final-cand-phone').value.trim();
   const email = document.getElementById('final-cand-email').value.trim();
@@ -360,6 +426,24 @@ function executeFinalSubmission() {
 
   console.log("DHL Enterprise Final Payload Transmitted:", candidatePayload);
 
+  // Firestore Database Attempt Entry Record
+  if (db && userClientIP) {
+    try {
+      const docRef = db.collection('assessment_attempts').doc(userClientIP);
+      const docSnap = await docRef.get();
+      let prevCount = docSnap.exists ? (docSnap.data().attempts || 0) : 0;
+      await docRef.set({
+        ip: userClientIP,
+        attempts: prevCount + 1,
+        lastSubmittedAt: new Date().toISOString(),
+        candidateName: name,
+        email: email
+      }, { merge: true });
+    } catch (e) {
+      console.error("Firebase Database Submission Record Error:", e);
+    }
+  }
+
   // Trigger Animated Circular Processing Overlay
   const overlay = document.getElementById('processing-overlay');
   const stroke = document.getElementById('circle-stroke');
@@ -403,7 +487,7 @@ function executeFinalSubmission() {
       setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
 
-        // Increment attempt after finishing current submission so next visit goes to attempt 2 or gets blocked
+        // Increment attempt in localStorage after submission
         localStorage.setItem('dhl_attempts', (currentAttempts + 1).toString());
 
         // Page 4 UI Text updates depending on evaluation
