@@ -155,6 +155,18 @@ function saveCurrentAnswer() {
 
 function navigateQuestion(direction) {
   saveCurrentAnswer();
+
+  // Next question jaane se pehle check karein ki current answer blank na ho
+  if (direction > 0) {
+    const q = activeQuestions[currentQuestionIndex];
+    const currentAns = userAnswers[q.id] ? userAnswers[q.id].trim() : '';
+
+    if (!currentAns) {
+      alert(`PLEASE ANSWER QUESTION ${currentQuestionIndex + 1}!\n\nYou must provide a code response/solution before moving to the next question.`);
+      return;
+    }
+  }
+
   currentQuestionIndex += direction;
   if (currentQuestionIndex < 0) currentQuestionIndex = 0;
   if (currentQuestionIndex >= activeQuestions.length) currentQuestionIndex = activeQuestions.length - 1;
@@ -207,8 +219,27 @@ function handleAgencyChange(selectElem) {
 }
 
 function goToAgencyVerification(reason) {
-  clearInterval(timerInterval);
   saveCurrentAnswer();
+
+  // Time ya Security violation par direct submit karne dein
+  const isViolation = reason && (reason.includes('Security') || reason.includes('Time'));
+
+  if (!isViolation) {
+    // Check karein ki saare questions answered hain ya nahi
+    const unansweredQuestions = [];
+    activeQuestions.forEach((q, idx) => {
+      if (!userAnswers[q.id] || userAnswers[q.id].trim() === '') {
+        unansweredQuestions.push(idx + 1);
+      }
+    });
+
+    if (unansweredQuestions.length > 0) {
+      alert(`INCOMPLETE ASSESSMENT!\n\nYou have unanswered questions: Question ${unansweredQuestions.join(', ')}.\n\nPlease complete all architectural coding solutions before submitting.`);
+      return;
+    }
+  }
+
+  clearInterval(timerInterval);
   showPage('page-3');
 }
 
