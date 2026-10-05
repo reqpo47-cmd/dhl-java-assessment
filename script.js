@@ -77,57 +77,19 @@ function renderBlockedScreen(reasonMessage) {
   }
 })();
 
-// Real IP Fetching & Attempt Tracker Initializer
+// Real IP Fetching Logic
 (async function initIPAndFirebaseAttemptTracker() {
-  let localAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
-
-  if (localAttempts > 2) {
-    window.addEventListener('DOMContentLoaded', () => {
-      renderBlockedScreen();
-    });
-    return;
-  }
-
-  // Update Badge initially via local count
-  window.addEventListener('DOMContentLoaded', () => {
-    const badge = document.getElementById('attempt-badge');
-    if (badge) badge.textContent = `ATTEMPT: ${localAttempts}/2`;
-  });
-
-  // Try Syncing with Firebase
   try {
     const res = await fetch('https://api.ipify.org?format=json');
     const data = await res.json();
     userClientIP = data.ip ? data.ip.replace(/\./g, '_') : '';
-
-    if (db && userClientIP) {
-      const docRef = db.collection('assessment_attempts').doc(userClientIP);
-      const docSnap = await docRef.get();
-
-      if (docSnap.exists) {
-        const firestoreCount = docSnap.data().attempts || 0;
-        const actualAttempts = Math.max(localAttempts, firestoreCount + 1);
-        
-        if (actualAttempts > 2) {
-          renderBlockedScreen();
-          return;
-        }
-
-        localStorage.setItem('dhl_attempts', actualAttempts.toString());
-        const badge = document.getElementById('attempt-badge');
-        if (badge) badge.textContent = `ATTEMPT: ${actualAttempts}/2`;
-      }
-    }
   } catch (err) {
-    console.error("IP/Firestore Sync Warning:", err);
+    console.error("IP Fetching Warning:", err);
   }
 })();
 
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
-  let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
-  if (attemptsCount > 2) return;
-
   const progressBar = document.getElementById('splash-progress');
   const statusText = document.getElementById('splash-status');
   const splash = document.getElementById('splash-screen');
@@ -177,16 +139,9 @@ function showPage(pageId) {
   }
 }
 
+// LOGIN SUBMISSION & ASSESSMENT START
 async function startAssessmentProcess(e) {
   if (e && e.preventDefault) e.preventDefault();
-
-  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
-
-  if (attempts > 2) {
-    alert("Maximum attempts limit reached (2/2). Access blocked.");
-    renderBlockedScreen();
-    return;
-  }
 
   const name = document.getElementById('cand-name') ? document.getElementById('cand-name').value.trim() : '';
   const email = document.getElementById('cand-email') ? document.getElementById('cand-email').value.trim().toLowerCase() : '';
@@ -208,7 +163,9 @@ async function startAssessmentProcess(e) {
     return;
   }
 
-  // --- ADDED SECURITY: Candidate Tracking & Duplicate Attempt Verification ---
+  let currentAttemptNum = 1;
+
+  // --- ATTEMPT TRACKING & CHECKING ON START ASSESSMENT ---
   if (db) {
     try {
       const candidatesRef = db.collection('registered_candidates');
@@ -216,49 +173,55 @@ async function startAssessmentProcess(e) {
       const emailQuery = await candidatesRef.where('email', '==', email).get();
       const phoneQuery = await candidatesRef.where('phone', '==', phone).get();
 
-      let existingCandidate = null;
+      let existingData = null;
       if (!emailQuery.empty) {
-        existingCandidate = emailQuery.docs[0].data();
+        existingData = emailQuery.docs[0].data();
       } else if (!phoneQuery.empty) {
-        existingCandidate = phoneQuery.docs[0].data();
+        existingData = phoneQuery.docs[0].data();
       }
 
-      if (existingCandidate) {
-        let existingAttempts = existingCandidate.attemptsCount || 1;
-        if (existingAttempts >= 2) {
-          alert("ACCESS BLOCKED: Matching Email or Phone record has already completed maximum allowed attempts (2/2).");
-          localStorage.setItem('dhl_attempts', '3');
-          renderBlockedScreen("Candidate profile matching Email/Phone has exceeded maximum allowed attempts (2/2).");
+      if (existingData) {
+        let previousAttempts = existingData.attemptsCount || 0;
+        
+        // Agar pehle se 2 attempts ho chuke hain, tabhi block hoga
+        if (previousAttempts >= 2) {
+          alert("ACCESS BLOCKED: You have already completed all 2 allowed attempts.");
+          renderBlockedScreen("Maximum allowed attempts (2/2) exceeded for this Email/Phone.");
           return;
-        } else {
-          attempts = existingAttempts + 1;
-          localStorage.setItem('dhl_attempts', attempts.toString());
         }
+
+        // 2nd Attempt allow hoga
+        currentAttemptNum = previousAttempts + 1;
       } else {
-        // Save Signup Profile Data
-        await candidatesRef.doc(email).set({
-          fullName: name,
-          email: email,
-          phone: phone,
-          linkedin: linkedin,
-          registeredAt: new Date().toISOString(),
-          attemptsCount: 1
-        }, { merge: true });
+        currentAttemptNum = 1;
       }
+
+      // Record update with current attempt count
+      await candidatesRef.doc(email).set({
+        fullName: name,
+        email: email,
+        phone: phone,
+        linkedin: linkedin,
+        attemptsCount: currentAttemptNum,
+        lastAttemptedAt: new Date().toISOString(),
+        clientIP: userClientIP
+      }, { merge: true });
+
     } catch (err) {
-      console.error("Identity Verification Warning:", err);
+      console.error("Firestore Attempt Verification Error:", err);
     }
   }
-  // --------------------------------------------------------------------------
+
+  // LocalStorage & Badge Update
+  localStorage.setItem('dhl_attempts', currentAttemptNum.toString());
+  const badge = document.getElementById('attempt-badge');
+  if (badge) {
+    badge.textContent = `ATTEMPT: ${currentAttemptNum}/2`;
+  }
 
   if (document.getElementById('final-cand-name')) document.getElementById('final-cand-name').value = name;
   if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
   if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
-
-  const badge = document.getElementById('attempt-badge');
-  if (badge) {
-    badge.textContent = `ATTEMPT: ${attempts}/2`;
-  }
 
   if (typeof getQuestionsForCurrentAttempt === "function") {
     activeQuestions = getQuestionsForCurrentAttempt();
@@ -357,6 +320,7 @@ function startTimer() {
   }, 1000);
 }
 
+// TAB / MINIMIZE PROTECTION
 function activateTabProtection() {
   document.addEventListener('visibilitychange', () => {
     const page2 = document.getElementById('page-2');
@@ -447,35 +411,19 @@ async function executeFinalSubmission(e) {
     ? evaluateCandidateResponses(activeQuestions, userAnswers)
     : { passed: false, score: 0, total: 5 };
 
-  let currentAttempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
-
-  // Firestore Sync Background Execution
-  if (db) {
+  // Sync Final Submission Record
+  if (db && email) {
     try {
-      const candidatesRef = db.collection('registered_candidates').doc(email);
-      await candidatesRef.set({
-        fullName: name,
-        email: email,
-        phone: phone,
-        attemptsCount: currentAttempts,
+      await db.collection('registered_candidates').doc(email).set({
         lastSubmittedAt: new Date().toISOString(),
-        clientIP: userClientIP
+        agency: finalAgencyName,
+        joiningTimeline: joining,
+        workAuthorization: workAuth,
+        passed: evalResult.passed,
+        score: evalResult.score
       }, { merge: true });
-
-      if (userClientIP) {
-        const docRef = db.collection('assessment_attempts').doc(userClientIP);
-        const docSnap = await docRef.get();
-        let prevCount = docSnap.exists ? (docSnap.data().attempts || 0) : 0;
-        await docRef.set({
-          ip: userClientIP,
-          attempts: prevCount + 1,
-          lastSubmittedAt: new Date().toISOString(),
-          candidateName: name,
-          email: email
-        }, { merge: true });
-      }
     } catch (err) {
-      console.error("Firestore Record Error:", err);
+      console.error("Firestore Final Record Error:", err);
     }
   }
 
@@ -518,9 +466,6 @@ async function executeFinalSubmission(e) {
       clearInterval(interval);
       setTimeout(() => {
         if (overlay) overlay.style.display = 'none';
-
-        // Increment attempt count on submission
-        localStorage.setItem('dhl_attempts', (currentAttempts + 1).toString());
 
         const ackTitle = document.querySelector('#page-4 h2, #page-4 h3');
         const ackStatus = document.getElementById('ack-status') || document.querySelector('#page-4 .status-text');
