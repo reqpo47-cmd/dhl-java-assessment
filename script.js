@@ -10,6 +10,7 @@
 
   window.currentStorageKey = 'dhl_attempts';
 })();
+
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('splash-progress');
@@ -40,6 +41,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 450);
 });
+
 let timeRemaining = 45 * 60; // 45 Minutes
 let timerInterval = null;
 let currentQuestionIndex = 0;
@@ -86,9 +88,14 @@ function startAssessmentProcess() {
   if (document.getElementById('final-cand-email')) document.getElementById('final-cand-email').value = email;
   if (document.getElementById('final-cand-phone')) document.getElementById('final-cand-phone').value = phone;
 
-  // Increment attempts counter
-  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '0') + 1;
-  localStorage.setItem('dhl_attempts', attempts);
+  // Increment attempts counter when candidate starts test
+  let attempts = parseInt(localStorage.getItem('dhl_attempts') || '1', 10) + 1;
+  localStorage.setItem('dhl_attempts', attempts.toString());
+
+  const badge = document.getElementById('attempt-badge');
+  if (badge) {
+    badge.textContent = `ATTEMPT: ${attempts}`;
+  }
 
   // Load Questions set dynamically
   if (typeof getQuestionsForCurrentAttempt === "function") {
@@ -177,7 +184,8 @@ function startTimer() {
 // Security Enforcement: Anti Tab-Switching
 function activateTabProtection() {
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && document.getElementById('page-2').classList.contains('active')) {
+    const page2 = document.getElementById('page-2');
+    if (document.hidden && page2 && page2.classList.contains('active')) {
       clearInterval(timerInterval);
       alert("SECURITY VIOLATION: Tab switch or window minimization detected. Directing to final submission.");
       goToAgencyVerification('Security Violation (Tab Switch)');
@@ -295,27 +303,9 @@ function executeFinalSubmission() {
         document.getElementById('ack-name').textContent = name;
         document.getElementById('ack-agency').textContent = finalAgencyName;
         document.getElementById('ack-joining').textContent = joining;
-// Increment Attempt Count on Successful Submission
-        const key = window.currentStorageKey || 'dhl_attempts_default';
-        let currentCount = parseInt(localStorage.getItem(key) || '0', 10);
-        localStorage.setItem(key, (currentCount + 1).toString()); 
+        
         showPage('page-4');
       }, 500);
     }
   }, 40);
 }
-// Strict Proctoring: Auto-submit attempt on tab switch or window minimization
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    const key = window.currentStorageKey || 'dhl_attempts_default';
-    let currentCount = parseInt(localStorage.getItem(key) || '0', 10);
-    
-    // Auto increment attempt due to proctoring violation
-    localStorage.setItem(key, (currentCount + 1).toString());
-    
-    alert("SECURITY & PROCTORING VIOLATION DETECTED: You navigated away from the assessment tab/window. Your current attempt has been logged and auto-submitted.");
-    
-    // Force reload to apply attempt block / update portal status
-    location.reload();
-  }
-});
