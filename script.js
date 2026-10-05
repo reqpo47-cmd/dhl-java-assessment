@@ -1,3 +1,40 @@
+// Browser Restriction Check (Only Google Chrome Allowed)
+(function enforceChromeOnly() {
+  const ua = navigator.userAgent;
+  const isFirefox = ua.includes("Firefox");
+  const isEdge = ua.includes("Edg");
+  const isOpera = ua.includes("OPR") || ua.includes("Opera");
+  const isSafari = ua.includes("Safari") && !ua.includes("Chrome");
+  const isChrome = ua.includes("Chrome") && !isEdge && !isOpera;
+
+  if (!isChrome || isFirefox || isEdge || isOpera || isSafari) {
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+      const splash = document.getElementById('splash-screen');
+      if (splash) {
+        splash.style.opacity = '1';
+        splash.style.visibility = 'visible';
+        splash.style.background = '#000000';
+        splash.innerHTML = `
+          <div style="text-align: center; color: #FFFFFF; font-family: monospace; padding: 40px; max-width: 600px; margin: auto; border: 2px solid #D40511; background: #111; margin-top: 10%;">
+            <h1 style="color: #D40511; font-size: 24px; margin-bottom: 15px;">UNSUPPORTED BROWSER DETECTED</h1>
+            <p style="color: #FFCC00; font-size: 14px; line-height: 1.6;">
+              ACCESS RESTRICTED: Mozilla Firefox, Microsoft Edge, Safari, and Opera are strictly prohibited for REQ-PO47 assessment.
+            </p>
+            <hr style="border-color: #333; margin: 20px 0;" />
+            <p style="font-size: 13px; color: #AAA;">
+              Please open this assessment link exclusively using <strong>Google Chrome</strong>.
+            </p>
+            <div style="margin-top: 25px; padding: 12px; background: #220000; border: 1px solid #D40511; color: #FF9999; font-size: 12px;">
+              For any technical assistance, please contact your consultancy recruitment team.
+            </div>
+          </div>
+        `;
+      }
+    });
+  }
+})();
+
 // Basic Attempt Tracker (Without IP Lockout)
 (function initSimpleAttemptTracker() {
   let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
