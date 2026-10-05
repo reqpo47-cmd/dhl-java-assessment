@@ -1,46 +1,14 @@
-// Cross-Browser Strict IP Tracking & Lock System
-(async function initCrossBrowserLock() {
-  let userIP = 'UNKNOWN_IP';
-  
-  try {
-    const res = await fetch('https://api.ipify.org?format=json');
-    const data = await res.json();
-    userIP = data.ip;
-  } catch (e) {
-    console.warn("IP Fetch Fallback Active");
-  }
+// Basic Attempt Tracker (Without IP Lockout)
+(function initSimpleAttemptTracker() {
+  let attemptsCount = parseInt(localStorage.getItem('dhl_attempts') || '1', 10);
 
-  // Cross-Browser Global Key based solely on IP Address
-  const globalIpKey = `dhl_ip_lock_${userIP.replace(/[\.:]/g, '_')}`;
-  let attemptsCount = parseInt(localStorage.getItem(globalIpKey) || '0', 10);
-
-  // Hard Lock after 2 attempts across ANY browser on this network/device
-  if (attemptsCount >= 2) {
-    document.body.innerHTML = `
-      <div style="height:100vh; background:#000; color:#FFCC00; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:Arial, sans-serif; text-align:center; padding:30px;">
-        <h1 style="color:#D40511; font-size:28px; margin-bottom:15px; font-weight:900; letter-spacing:1px;">ACCESS DENIED - MAXIMUM ATTEMPTS EXCEEDED</h1>
-        <div style="background:#111; border:1px solid #333; padding:25px; border-radius:8px; max-width:600px; text-align:left;">
-          <p style="color:#FFF; font-size:15px; line-height:1.6; margin-bottom:10px;">
-            <strong>SECURITY PROTOCOL ALERT:</strong> Candidate IP <span style="color:#FFCC00;">(${userIP})</span> has exhausted all permitted <span style="color:#D40511;">2 / 2</span> attempts for REQ-PO47 Technical Evaluation.
-          </p>
-          <p style="color:#AAA; font-size:13px; line-height:1.5;">
-            Access to this portal has been locked across all browsers and sessions on this network interface.
-          </p>
-        </div>
-        <p style="margin-top:25px; color:#666; font-size:12px;">DHL Talent Acquisition & Consulting Oversight Command</p>
-      </div>
-    `;
-    return;
-  }
-
-  // Live Badge Update
+  // Update Badge in Header
   const badge = document.getElementById('attempt-badge');
   if (badge) {
-    badge.textContent = `ATTEMPT: ${attemptsCount} / 2`;
+    badge.textContent = `ATTEMPT: ${attemptsCount}`;
   }
 
-  window.currentStorageKey = globalIpKey;
-  window.currentCandidateIP = userIP;
+  window.currentStorageKey = 'dhl_attempts';
 })();
 // Enterprise Portal Initialization Animation Logic
 window.addEventListener('DOMContentLoaded', () => {
